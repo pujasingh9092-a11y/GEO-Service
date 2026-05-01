@@ -1,0 +1,3498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEO Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,300&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0f0e0c;
+    --ink2: #3a3830;
+    --ink3: #7a7669;
+    --paper: #f7f4ee;
+    --paper2: #eeeae0;
+    --paper3: #e4dfd3;
+    --accent: #c8602a;
+    --accent2: #e8854d;
+    --green: #2d6a4f;
+    --green-light: #d8f3dc;
+    --amber: #b5600a;
+    --amber-light: #fef3c7;
+    --blue: #1a4f7a;
+    --blue-light: #dbeafe;
+    --border: #d8d3c8;
+    --shadow: 0 1px 3px rgba(15,14,12,.08), 0 4px 16px rgba(15,14,12,.06);
+    --shadow-lg: 0 8px 32px rgba(15,14,12,.14);
+    --r: 8px;
+    --r-lg: 14px;
+  }
+
+  body {
+    font-family: 'Instrument Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; }
+
+  /* ── AUTH SCREEN ── */
+  #auth-screen {
+    align-items: stretch;
+  }
+  .auth-left {
+    width: 52%;
+    background: var(--ink);
+    padding: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  .auth-left::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 420px; height: 420px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(200,96,42,.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .auth-left::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: -60px;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(200,96,42,.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .auth-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .auth-brand-dot {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .auth-brand-dot svg { width: 16px; height: 16px; }
+  .auth-brand-name {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: #fff;
+    letter-spacing: -.3px;
+  }
+  .auth-hero {
+    position: relative; z-index: 1;
+  }
+  .auth-hero-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent2);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .auth-hero h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 48px;
+    font-weight: 300;
+    color: #fff;
+    line-height: 1.1;
+    margin-bottom: 20px;
+  }
+  .auth-hero h1 em {
+    font-style: italic;
+    color: var(--accent2);
+  }
+  .auth-hero p {
+    font-size: 15px;
+    color: rgba(255,255,255,.55);
+    line-height: 1.6;
+    max-width: 340px;
+  }
+  .auth-stats {
+    display: flex;
+    gap: 32px;
+    position: relative; z-index: 1;
+  }
+  .auth-stat-num {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    color: #fff;
+    font-weight: 500;
+  }
+  .auth-stat-label {
+    font-size: 12px;
+    color: rgba(255,255,255,.4);
+  }
+
+  .auth-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 40px;
+  }
+  .auth-form-card {
+    width: 100%;
+    max-width: 380px;
+  }
+  .auth-form-title {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .auth-form-sub {
+    font-size: 14px;
+    color: var(--ink3);
+    margin-bottom: 32px;
+  }
+  .auth-tab-row {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .auth-tab {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink3);
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .auth-tab.active {
+    background: var(--ink);
+    color: #fff;
+  }
+  .form-group { margin-bottom: 18px; }
+  .form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink2);
+    letter-spacing: .4px;
+    margin-bottom: 7px;
+    text-transform: uppercase;
+  }
+  .form-input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--r);
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    background: #fff;
+    transition: border-color .2s, box-shadow .2s;
+    outline: none;
+  }
+  .form-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(200,96,42,.12);
+  }
+  .btn-primary {
+    width: 100%;
+    padding: 13px;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: var(--r);
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+    margin-top: 6px;
+  }
+  .btn-primary:hover { background: #1f1d19; }
+  .btn-primary:active { transform: scale(.99); }
+  .auth-demo-hint {
+    margin-top: 20px;
+    padding: 12px 14px;
+    background: var(--paper2);
+    border-radius: var(--r);
+    font-size: 12px;
+    color: var(--ink3);
+    line-height: 1.5;
+  }
+  .auth-demo-hint strong { color: var(--ink2); }
+  .auth-error {
+    color: #b91c1c;
+    font-size: 13px;
+    margin-top: 10px;
+    display: none;
+  }
+
+  /* ── APP SHELL ── */
+  #app-screen { flex-direction: column; }
+  .app-topbar {
+    height: 52px;
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .topbar-dot {
+    width: 20px; height: 20px;
+    background: var(--accent);
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .topbar-dot svg { width: 11px; height: 11px; }
+  .topbar-sep { width: 1px; height: 20px; background: var(--border); }
+  .topbar-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--ink3);
+  }
+  .topbar-breadcrumb span { color: var(--ink); font-weight: 500; }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .topbar-user {
+    width: 30px; height: 30px;
+    background: var(--ink);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+  }
+  .topbar-logout {
+    font-size: 12px;
+    color: var(--ink3);
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    font-family: 'Instrument Sans', sans-serif;
+    transition: all .2s;
+  }
+  .topbar-logout:hover { background: var(--paper2); color: var(--ink); }
+
+  /* ── PROJECTS VIEW ── */
+  #projects-view, #plan-selector-view, #plan-view { display: none; }
+  #projects-view.active, #plan-selector-view.active, #plan-view.active { display: block; }
+
+  .view-wrap { padding: 40px 48px; max-width: 960px; margin: 0 auto; }
+
+  .view-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 36px;
+  }
+  .view-title {
+    font-family: 'Fraunces', serif;
+    font-size: 32px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+  .view-sub {
+    font-size: 14px;
+    color: var(--ink3);
+    margin-top: 5px;
+  }
+  .btn-new {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 18px;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: var(--r);
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s;
+    white-space: nowrap;
+  }
+  .btn-new:hover { background: #1f1d19; }
+  .btn-new svg { width: 14px; height: 14px; }
+
+  /* Projects grid */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .project-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 22px;
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .project-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity .2s;
+  }
+  .project-card:hover { border-color: var(--accent); box-shadow: var(--shadow-lg); }
+  .project-card:hover::before { opacity: 1; }
+  .project-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .project-icon {
+    width: 38px; height: 38px;
+    background: var(--paper2);
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .project-menu-btn {
+    width: 28px; height: 28px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink3);
+    opacity: 0;
+    transition: all .2s;
+    position: relative;
+    z-index: 2;
+  }
+  .project-card:hover .project-menu-btn { opacity: 1; }
+  .project-menu-btn:hover { background: var(--paper2); color: var(--ink); }
+  .project-name {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 5px;
+    line-height: 1.2;
+  }
+  .project-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink3);
+  }
+  .project-plans {
+    display: flex;
+    gap: 6px;
+    margin-top: 14px;
+  }
+  .plan-badge {
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'DM Mono', monospace;
+  }
+  .plan-badge.active { background: var(--green-light); color: var(--green); }
+  .plan-badge.locked { background: var(--paper3); color: var(--ink3); }
+
+  /* Context menu */
+  .ctx-menu {
+    position: fixed;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    padding: 5px;
+    z-index: 9999;
+    min-width: 160px;
+    display: none;
+  }
+  .ctx-menu.open { display: block; }
+  .ctx-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--ink2);
+    transition: background .15s;
+  }
+  .ctx-item:hover { background: var(--paper2); }
+  .ctx-item.danger { color: #b91c1c; }
+  .ctx-item.danger:hover { background: #fef2f2; }
+  .ctx-item svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 80px 40px;
+    color: var(--ink3);
+  }
+  .empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: .6;
+  }
+  .empty-title {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    color: var(--ink2);
+    margin-bottom: 8px;
+  }
+  .empty-desc { font-size: 14px; line-height: 1.5; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(15,14,12,.4);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: var(--r-lg);
+    padding: 28px;
+    width: 440px;
+    box-shadow: var(--shadow-lg);
+    animation: modalIn .2s ease;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(.96) translateY(8px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .modal-title {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 500;
+    margin-bottom: 18px;
+  }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 22px;
+    justify-content: flex-end;
+  }
+  .btn-ghost {
+    padding: 9px 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    background: transparent;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--ink2);
+    transition: all .2s;
+  }
+  .btn-ghost:hover { background: var(--paper2); }
+  .btn-danger {
+    padding: 9px 18px;
+    border: none;
+    border-radius: var(--r);
+    background: #b91c1c;
+    color: #fff;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .btn-danger:hover { background: #991b1b; }
+  .btn-confirm {
+    padding: 9px 18px;
+    border: none;
+    border-radius: var(--r);
+    background: var(--ink);
+    color: #fff;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .btn-confirm:hover { background: #1f1d19; }
+
+  /* ── PLAN SELECTOR ── */
+  .plan-selector-back {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--ink3);
+    cursor: pointer;
+    margin-bottom: 32px;
+    width: fit-content;
+    transition: color .2s;
+  }
+  .plan-selector-back:hover { color: var(--ink); }
+  .plan-selector-back svg { width: 14px; height: 14px; }
+
+  .plan-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 8px;
+  }
+  .plan-card {
+    border: 1.5px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 28px;
+    cursor: pointer;
+    transition: all .25s;
+    position: relative;
+    overflow: hidden;
+    background: #fff;
+  }
+  .plan-card:not(.disabled):hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+  .plan-card.disabled {
+    opacity: .5;
+    cursor: not-allowed;
+    filter: grayscale(.3);
+  }
+  .plan-card-num {
+    font-family: 'Fraunces', serif;
+    font-size: 52px;
+    font-weight: 300;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .plan-card-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 16px;
+  }
+  .plan-card-title {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .plan-card-desc {
+    font-size: 13px;
+    color: var(--ink3);
+    line-height: 1.5;
+  }
+  .plan-card-coming {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: var(--paper3);
+    color: var(--ink3);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── PLAN VIEW ── */
+  .plan-layout {
+    display: flex;
+    height: calc(100vh - 52px);
+  }
+
+  /* Sidebar */
+  .plan-sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--paper);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .sidebar-header {
+    padding: 18px 16px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-project-name {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sidebar-plan-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 8px;
+  }
+  .sidebar-nav::-webkit-scrollbar { width: 4px; }
+  .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+  .sidebar-nav::-webkit-scrollbar-thumb { background: var(--paper3); border-radius: 2px; }
+
+  .nav-phase-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ink3);
+    padding: 10px 8px 5px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 8px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--ink2);
+    transition: all .15s;
+    line-height: 1.3;
+  }
+  .nav-item:hover { background: var(--paper2); color: var(--ink); }
+  .nav-item.active {
+    background: #fff;
+    color: var(--ink);
+    font-weight: 500;
+    box-shadow: 0 1px 3px rgba(15,14,12,.08);
+  }
+  .nav-item-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .nav-item-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--ink3);
+    flex-shrink: 0;
+    min-width: 22px;
+  }
+  .nav-progress {
+    height: 2px;
+    background: var(--paper3);
+    margin: 0 8px 2px;
+    border-radius: 1px;
+    overflow: hidden;
+  }
+  .nav-progress-bar {
+    height: 100%;
+    background: var(--green);
+    border-radius: 1px;
+    transition: width .4s ease;
+  }
+
+  /* Plan content */
+  .plan-content {
+    flex: 1;
+    overflow-y: auto;
+    background: #fff;
+  }
+  .plan-content::-webkit-scrollbar { width: 6px; }
+  .plan-content::-webkit-scrollbar-track { background: transparent; }
+  .plan-content::-webkit-scrollbar-thumb { background: var(--paper3); border-radius: 3px; }
+
+  .chapter {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 52px 48px 80px;
+    display: none;
+  }
+  .chapter.active { display: block; animation: fadeUp .3s ease; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .chapter-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .chapter-phase-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+  .tag-p1 { background: #dbeafe; color: #1e40af; }
+  .tag-p2 { background: #d1fae5; color: #065f46; }
+  .tag-p3 { background: #fef3c7; color: #92400e; }
+  .tag-p4 { background: #f3e8ff; color: #6b21a8; }
+
+  .chapter-day {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--ink3);
+  }
+  .chapter-title {
+    font-family: 'Fraunces', serif;
+    font-size: 30px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.15;
+    margin-bottom: 6px;
+  }
+  .chapter-subtitle {
+    font-size: 15px;
+    color: var(--ink3);
+    margin-bottom: 28px;
+    line-height: 1.5;
+  }
+
+  /* Progress bar in chapter */
+  .chapter-progress {
+    background: var(--paper2);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .chapter-progress-bar-wrap {
+    flex: 1;
+    height: 6px;
+    background: var(--paper3);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .chapter-progress-bar {
+    height: 100%;
+    background: var(--green);
+    border-radius: 3px;
+    transition: width .4s;
+  }
+  .chapter-progress-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--ink3);
+    white-space: nowrap;
+  }
+
+  /* Tasks */
+  .tasks-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .task-item {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color .2s;
+    background: #fff;
+  }
+  .task-item:has(.task-check:checked) { border-color: var(--green); }
+
+  .task-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .task-check-wrap {
+    flex-shrink: 0;
+    margin-top: 1px;
+    position: relative;
+  }
+  .task-check {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border);
+    border-radius: 5px;
+    appearance: none;
+    cursor: pointer;
+    transition: all .2s;
+    flex-shrink: 0;
+  }
+  .task-check:checked {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .task-check:checked::after {
+    content: '';
+    display: block;
+    width: 10px; height: 6px;
+    border-left: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    transform: rotate(-45deg);
+    margin: 3px 0 0 3px;
+  }
+  .task-main { flex: 1; min-width: 0; }
+  .task-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--ink3);
+    margin-bottom: 3px;
+  }
+  .task-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.35;
+    transition: color .2s;
+  }
+  .task-item:has(.task-check:checked) .task-name {
+    color: var(--ink3);
+    text-decoration: line-through;
+    text-decoration-color: var(--ink3);
+  }
+  .task-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 5px;
+    flex-wrap: wrap;
+  }
+  .task-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .task-tag.qw { background: var(--green-light); color: var(--green); }
+  .task-tag.training { background: var(--amber-light); color: var(--amber); }
+  .task-tag.owner { background: var(--blue-light); color: var(--blue); }
+  .task-toggle {
+    flex-shrink: 0;
+    width: 24px; height: 24px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--ink3);
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+    margin-top: 2px;
+  }
+  .task-toggle:hover { background: var(--paper2); color: var(--ink); }
+  .task-toggle svg { width: 14px; height: 14px; transition: transform .25s; }
+  .task-item.expanded .task-toggle svg { transform: rotate(180deg); }
+
+  .task-body {
+    display: none;
+    padding: 0 16px 16px 46px;
+    border-top: 1px solid var(--paper2);
+    margin-top: -2px;
+  }
+  .task-item.expanded .task-body { display: block; }
+
+  .task-section {
+    margin-top: 14px;
+  }
+  .task-section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .task-section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--paper3);
+  }
+
+  .task-execution {
+    font-size: 13px;
+    color: var(--ink2);
+    line-height: 1.7;
+    white-space: pre-wrap;
+    font-family: 'Instrument Sans', sans-serif;
+  }
+  .task-execution strong { color: var(--ink); font-weight: 600; }
+
+  .task-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .task-info-item {
+    background: var(--paper);
+    border-radius: 7px;
+    padding: 10px 12px;
+  }
+  .task-info-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 4px;
+  }
+  .task-info-val {
+    font-size: 13px;
+    color: var(--ink2);
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  .task-notes-area {
+    width: 100%;
+    min-height: 60px;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    padding: 10px 12px;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    resize: vertical;
+    outline: none;
+    background: var(--paper);
+    transition: border-color .2s;
+    line-height: 1.6;
+  }
+  .task-notes-area:focus { border-color: var(--accent); background: #fff; }
+  .task-notes-area::placeholder { color: var(--ink3); }
+  .task-link-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--paper);
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    padding: 0 10px 0 12px;
+    transition: border-color .2s, background .2s;
+  }
+  .task-link-row:focus-within {
+    border-color: var(--accent);
+    background: #fff;
+  }
+  .task-link-icon {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    color: var(--ink3);
+  }
+  .task-link-icon svg { width: 14px; height: 14px; }
+  .task-link-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    padding: 9px 0;
+    outline: none;
+    min-width: 0;
+  }
+  .task-link-input::placeholder { color: var(--ink3); }
+  .task-link-open {
+    flex-shrink: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 26px; height: 26px;
+    border-radius: 5px;
+    border: none;
+    background: transparent;
+    color: var(--ink3);
+    cursor: pointer;
+    transition: background .15s, color .15s;
+    text-decoration: none;
+  }
+  .task-link-open:hover { background: var(--paper2); color: var(--ink); }
+  .task-link-open svg { width: 12px; height: 12px; }
+  .task-link-row.has-value .task-link-open { display: flex; }
+
+
+  /* Chapter nav */
+  .chapter-nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--paper3);
+  }
+  .chapter-nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--r);
+    background: transparent;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink2);
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .chapter-nav-btn:hover { border-color: var(--ink); color: var(--ink); }
+  .chapter-nav-btn:disabled { opacity: .3; cursor: not-allowed; }
+  .chapter-nav-btn svg { width: 14px; height: 14px; }
+
+  @media (max-width: 700px) {
+    .auth-left { display: none; }
+    .plan-sidebar { width: 220px; }
+    .chapter { padding: 32px 20px 60px; }
+    .view-wrap { padding: 24px 20px; }
+    .plan-cards { grid-template-columns: 1fr; }
+  }
+
+  /* ── SAVE BUTTON ── */
+  .btn-save {
+    display: none;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 16px;
+    background: var(--green);
+    color: #fff;
+    border: none;
+    border-radius: var(--r);
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+    position: relative;
+  }
+  .btn-save.visible { display: flex; }
+  .btn-save:hover { background: #245a42; }
+  .btn-save:active { transform: scale(.98); }
+  .btn-save svg { width: 14px; height: 14px; }
+  .save-dot {
+    position: absolute;
+    top: -3px; right: -3px;
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    border: 2px solid #fff;
+    display: none;
+  }
+  .btn-save.dirty .save-dot { display: block; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s, transform .25s;
+    z-index: 9999;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .toast svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+  /* ── EDITOR TOOLBAR ── */
+  .exec-editor-wrap {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color .2s;
+    background: #fff;
+  }
+  .exec-editor-wrap:focus-within { border-color: var(--accent); }
+  .exec-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 8px;
+    background: var(--paper);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .exec-toolbar-btn {
+    width: 28px; height: 28px;
+    border: none;
+    background: transparent;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink2);
+    font-size: 12px;
+    font-family: 'Instrument Sans', sans-serif;
+    font-weight: 600;
+    transition: background .15s, color .15s;
+    flex-shrink: 0;
+  }
+  .exec-toolbar-btn:hover { background: var(--paper3); color: var(--ink); }
+  .exec-toolbar-btn.active { background: var(--ink); color: #fff; }
+  .exec-toolbar-btn svg { width: 13px; height: 13px; }
+  .exec-toolbar-sep {
+    width: 1px; height: 18px;
+    background: var(--border);
+    margin: 0 3px;
+    flex-shrink: 0;
+  }
+  .exec-editor {
+    min-height: 160px;
+    padding: 12px 14px;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    line-height: 1.7;
+    outline: none;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    background: #fff;
+  }
+  .exec-editor strong { color: var(--ink); }
+  .exec-editor em { font-style: italic; }
+  .exec-editor code {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    background: var(--paper2);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--ink2);
+  }
+  .exec-editor ul, .exec-editor ol {
+    padding-left: 20px;
+    margin: 4px 0;
+  }
+  .exec-editor li { margin: 2px 0; }
+  .exec-editor [data-section] {
+    font-weight: 700;
+    color: var(--ink);
+    display: block;
+    margin-top: 8px;
+  }
+
+  /* ── EDITABLE TOOLS ── */
+  .tools-editable {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 13px;
+    color: var(--ink2);
+    font-weight: 500;
+    line-height: 1.4;
+    outline: none;
+    resize: none;
+    min-height: 28px;
+    padding: 0;
+  }
+  .tools-editable:focus {
+    color: var(--ink);
+  }
+  .task-info-item.editable {
+    border: 1.5px solid transparent;
+    transition: border-color .2s;
+    cursor: text;
+  }
+  .task-info-item.editable:focus-within {
+    border-color: var(--accent);
+    background: #fff;
+  }
+  .tools-editable::placeholder { color: var(--ink3); font-weight: 400; }
+
+  /* ── MODIFIED BADGE ── */
+  .task-modified-badge {
+    display: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: var(--amber-light);
+    color: var(--amber);
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .task-modified-badge.visible { display: inline; }
+
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     AUTH SCREEN
+═══════════════════════════════════════════════ -->
+<div id="auth-screen" class="screen active">
+  <div class="auth-left">
+    <div class="auth-brand">
+      <div class="auth-brand-dot">
+        <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#fff" stroke-width="2"/><circle cx="8" cy="8" r="2" fill="#fff"/></svg>
+      </div>
+      <span class="auth-brand-name">GEO Planner</span>
+    </div>
+    <div class="auth-hero">
+      <div class="auth-hero-label">Generative Engine Optimisation</div>
+      <h1>Plan your<br><em>AI visibility</em><br>systematically.</h1>
+      <p>A structured workspace for GEO teams. Manage 30/60/90-day client plans with full task tracking, execution guides, and progress monitoring.</p>
+    </div>
+    <div class="auth-stats">
+      <div>
+        <div class="auth-stat-num">42</div>
+        <div class="auth-stat-label">Consolidated tasks</div>
+      </div>
+      <div>
+        <div class="auth-stat-num">4</div>
+        <div class="auth-stat-label">Execution phases</div>
+      </div>
+      <div>
+        <div class="auth-stat-num">30</div>
+        <div class="auth-stat-label">Day foundation</div>
+      </div>
+    </div>
+  </div>
+  <div class="auth-right">
+    <div class="auth-form-card">
+      <div class="auth-form-title">Welcome back</div>
+      <div class="auth-form-sub">Sign in to your workspace</div>
+      <div class="auth-tab-row">
+        <button class="auth-tab active" onclick="setAuthTab('login')">Sign in</button>
+        <button class="auth-tab" onclick="setAuthTab('register')">Create account</button>
+      </div>
+      <div id="login-form">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" id="login-email" placeholder="you@agency.com" value="demo@geo.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="login-password" placeholder="••••••••" value="demo123">
+        </div>
+        <div class="auth-error" id="login-error">Invalid email or password.</div>
+        <button class="btn-primary" onclick="handleLogin()">Sign in →</button>
+      </div>
+      <div id="register-form" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Full name</label>
+          <input class="form-input" type="text" id="reg-name" placeholder="Your name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" id="reg-email" placeholder="you@agency.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="reg-password" placeholder="Min. 6 characters">
+        </div>
+        <div class="auth-error" id="reg-error"></div>
+        <button class="btn-primary" onclick="handleRegister()">Create account →</button>
+      </div>
+      <div class="auth-demo-hint">
+        <strong>Demo credentials:</strong> demo@geo.com / demo123<br>
+        All data is stored in your browser's localStorage.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     APP SCREEN
+═══════════════════════════════════════════════ -->
+<div id="app-screen" class="screen">
+  <div class="app-topbar">
+    <div class="topbar-brand" onclick="goTo('projects')">
+      <div class="topbar-dot">
+        <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#fff" stroke-width="1.5"/><circle cx="8" cy="8" r="2" fill="#fff"/></svg>
+      </div>
+      GEO Planner
+    </div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-breadcrumb" id="breadcrumb">
+      <span>Clients</span>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-save" id="save-btn" onclick="saveAllEdits()">
+        <div class="save-dot"></div>
+        <svg viewBox="0 0 16 16" fill="none"><path d="M2 10v3a1 1 0 001 1h10a1 1 0 001-1v-3M8 2v8M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Save changes
+      </button>
+      <div class="topbar-user" id="topbar-user-initials">?</div>
+      <button class="topbar-logout" onclick="handleLogout()">Sign out</button>
+    </div>
+  </div>
+
+  <!-- PROJECTS VIEW -->
+  <div id="projects-view" class="active">
+    <div class="view-wrap">
+      <div class="view-header">
+        <div>
+          <div class="view-title">Clients</div>
+          <div class="view-sub">Your GEO client workspaces</div>
+        </div>
+        <button class="btn-new" onclick="openNewProjectModal()">
+          <svg viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          New client
+        </button>
+      </div>
+      <div class="projects-grid" id="projects-grid"></div>
+    </div>
+  </div>
+
+  <!-- PLAN SELECTOR VIEW -->
+  <div id="plan-selector-view">
+    <div class="view-wrap">
+      <div class="plan-selector-back" onclick="goTo('projects')">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Back to clients
+      </div>
+      <div class="view-header">
+        <div>
+          <div class="view-title" id="selector-project-name">Client</div>
+          <div class="view-sub">Choose a plan to work on</div>
+        </div>
+      </div>
+      <div class="plan-cards">
+        <div class="plan-card" onclick="openPlan(30)">
+          <div class="plan-card-num">30</div>
+          <div class="plan-card-label">Day Plan</div>
+          <div class="plan-card-title">Foundation & Audit</div>
+          <div class="plan-card-desc">Full GEO audit, baseline measurement, quick wins implementation, and Month 2 roadmap delivery.</div>
+        </div>
+        <div class="plan-card disabled">
+          <div class="plan-card-coming">Coming soon</div>
+          <div class="plan-card-num">60</div>
+          <div class="plan-card-label">Day Plan</div>
+          <div class="plan-card-title">Implementation</div>
+          <div class="plan-card-desc">Content rewrites, schema deployment, trust building, and off-site activation.</div>
+        </div>
+        <div class="plan-card disabled">
+          <div class="plan-card-coming">Coming soon</div>
+          <div class="plan-card-num">90</div>
+          <div class="plan-card-label">Day Plan</div>
+          <div class="plan-card-title">Scale & Authority</div>
+          <div class="plan-card-desc">Content scaling, PR amplification, reputation building, and final attribution.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLAN VIEW -->
+  <div id="plan-view">
+    <div class="plan-layout">
+      <!-- Sidebar -->
+      <div class="plan-sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-project-name" id="sidebar-project-name">Client</div>
+          <div class="sidebar-plan-label">30-Day Plan</div>
+        </div>
+        <div class="sidebar-nav" id="sidebar-nav"></div>
+      </div>
+      <!-- Content -->
+      <div class="plan-content" id="plan-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Context menu -->
+<div class="ctx-menu" id="ctx-menu">
+  <div class="ctx-item" onclick="ctxAction('rename')">
+    <svg viewBox="0 0 16 16" fill="none"><path d="M11 2.5a1.5 1.5 0 012.122 2.122L5.5 12.244 2 13.5l1.256-3.5L11 2.5z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Rename client
+  </div>
+  <div class="ctx-item danger" onclick="ctxAction('delete')">
+    <svg viewBox="0 0 16 16" fill="none"><path d="M3 5h10M6 5V3h4v2M6 8v4M10 8v4M4 5l1 9h6l1-9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Delete client
+  </div>
+</div>
+
+<!-- Modals -->
+<div class="modal-overlay" id="new-project-modal">
+  <div class="modal">
+    <div class="modal-title">New client</div>
+    <div class="form-group">
+      <label class="form-label">Company name</label>
+      <input class="form-input" type="text" id="new-project-name" placeholder="e.g. Acme Corp" autofocus>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('new-project-modal')">Cancel</button>
+      <button class="btn-confirm" onclick="createProject()">Create client</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="rename-modal">
+  <div class="modal">
+    <div class="modal-title">Rename client</div>
+    <div class="form-group">
+      <label class="form-label">Company name</label>
+      <input class="form-input" type="text" id="rename-input" placeholder="Company name">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('rename-modal')">Cancel</button>
+      <button class="btn-confirm" onclick="confirmRename()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <div class="modal-title">Delete client?</div>
+    <p style="font-size:14px;color:var(--ink3);line-height:1.5;margin-bottom:4px;">This will permanently delete <strong id="delete-project-name" style="color:var(--ink)">the client</strong> and all its data. This cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('delete-modal')">Cancel</button>
+      <button class="btn-danger" onclick="confirmDelete()">Delete client</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════
+
+const DEMO_USER = { email: 'demo@geo.com', password: 'demo123', name: 'Demo User' };
+
+const PLAN_30_DATA = [
+  {
+    id: 'p1', phase: 'PHASE 1', phaseTag: 'tag-p1', phaseLabel: 'Foundation & Access',
+    days: 'Days 1–5', color: '#1e40af',
+    title: 'Setup & Access',
+    subtitle: 'Get the team aligned, infrastructure live, and all access confirmed before any work begins.',
+    tasks: [
+      {
+        id: 't1', num: '01', qw: false, training: false, owner: 'CSM',
+        name: 'Align internal team — distribute 1-page project brief',
+        execution: `1. CSM creates Google Doc: 'GEO Project Brief – [Client Name]'
+   Include: client name · start date · 30/60/90-day deliverables · each team member's role · a 'What GEO is / is not' section (2–3 sentences max).
+
+2. Share brief via Basecamp 24 hrs BEFORE the kick-off meeting.
+   Subject: '[Client] GEO Kick-off – Please Read Before [Date]'.
+
+3. Request read-receipt or ✅ emoji reply from every recipient.
+
+4. Hold a 60–90 min internal kick-off in Google Meet.
+   Invite: SEO lead · content lead · analytics · social · client services.
+
+5. Fill in a RACI table per workstream:
+   Workstream | Responsible | Accountable | Consulted | Informed
+   Save RACI in Google Drive project folder.
+
+DONE WHEN: Brief acknowledged by 100% of team. RACI saved and shared.`,
+        tools: 'Google Meet · Google Docs · Basecamp',
+        dependency: 'No prior steps',
+      },
+      {
+        id: 't2', num: '02', qw: false, training: false, owner: 'CSM',
+        name: 'Build stakeholder map and confirm ownership per workstream',
+        execution: `1. Open new Google Sheet tab 'Stakeholder Map'.
+   Columns: Name | Department | Role | Email | Slack handle
+
+2. Fill in all known names. Leave blanks for unknowns.
+3. Circulate to manager to validate and fill gaps.
+4. Mark sheet as 'v1 – confirmed [date]'.
+5. For each workstream, name ONE person per role:
+   Workstream | Delivery Owner | Approver | Implementation Owner | Reporting Owner
+6. Ask each person to reply 'Confirmed' in Slack or email.
+
+DONE WHEN: Stakeholder map zero blank rows. Every workstream confirmed.`,
+        tools: 'Google Sheets · Slack · Basecamp',
+        dependency: 'Task 1',
+      },
+      {
+        id: 't3', num: '03', qw: false, training: false, owner: 'CSM + Analyst',
+        name: 'Create GEO working folder structure in Google Drive and Basecamp',
+        execution: `GOOGLE DRIVE:
+Create top-level folder: [Client Name] – GEO – [Month YYYY]
+Sub-folders:
+  00_Admin | 01_Strategy | 02_Technical_Audit | 03_Content_Audit
+  04_Schema | 05_GEO_Readiness | 06_AI_Benchmarking | 07_Brand_Narrative
+  08_Trust_Proof | 09_Reporting | 10_Client_Deliverables
+
+Share: Edit access for team. View for client.
+
+BASECAMP:
+Create matching project. Add all team members with correct permissions.
+Pin Drive link in Basecamp.
+
+ALSO CHECK:
+· Confirm CRM / lead database access is available.
+· Cross-check tools from audit vs what access exists now. Flag gaps.
+
+DONE WHEN: Drive folder live. Basecamp project active. Drive link pinned.`,
+        tools: 'Google Drive · Basecamp',
+        dependency: 'Task 2',
+      },
+      {
+        id: 't4', num: '04', qw: false, training: false, owner: 'CSM',
+        name: 'Align team on reporting cadence and 90-day working model',
+        execution: `Run a 30-min internal team meeting (separate from kick-off):
+Title: 'GEO [Client] – Working Model Alignment'
+
+Decide and document:
+· Reporting day (client-facing delivery)
+· Internal review day/time (who reviews before client sees)
+· Client sync day/time (biweekly)
+· Weekly internal check-in day/time (30 min — separate from client syncs)
+· Tool stack confirmed
+· Who has final approval before client delivery
+
+Save meeting notes to 00_Admin. Pin as Basecamp note.
+
+DONE WHEN: All cadence decisions confirmed and pinned.`,
+        tools: 'Google Calendar · Basecamp',
+        dependency: 'Task 1',
+      },
+      {
+        id: 't5', num: '05', qw: false, training: false, owner: 'CSM',
+        name: 'Send client access questionnaire and book all syncs',
+        execution: `ACCESS QUESTIONNAIRE:
+1. Prepare Google Sheet credentials template with rows for:
+   GA4 | GSC | Bing WMT | GTM | CMS | Hosting/CDN | Schema plugin
+   Screaming Frog | SEMrush | YouTube Studio | GBP | Reddit | Trustpilot | G2 | Capterra | Social accounts
+
+2. Pre-fill team email address the client should grant access to.
+3. Send: '[Client] – Access Request for GEO Project' — 48hr deadline.
+
+CALENDAR:
+4. Create recurring event: '[Client] GEO Biweekly Sync' — every 2 weeks, 13 occurrences.
+   Attach standing agenda: Actions → Progress → Priorities → Blockers → Questions
+5. Create weekly internal check-in (30 min) for delivery team.
+
+DONE WHEN: Questionnaire sent. All syncs in calendar.`,
+        tools: 'Google Sheets · Email · Google Calendar',
+        dependency: 'Task 4',
+      },
+      {
+        id: 't6', num: '06', qw: false, training: true, owner: 'Analyst',
+        name: 'Verify access to all analytics and technical platforms (incl. Bing WMT)',
+        execution: `CREATE ACCESS LOG:
+New Google Sheet tab 'Access Log'.
+Columns: Platform | URL/Login Link | Access Level | Date Confirmed | Status (✅/❌) | Blocker Notes
+
+VERIFY EACH PLATFORM:
+· GA4: Admin → Data Streams → green status. Realtime report: visit site → appear instantly.
+· GSC: Confirm canonical domain (https://). Check 3+ months data loads.
+· Bing WMT ⚠ DO NOT SKIP — surfaces AI performance data:
+  Log in at bing.com/webmasters. If not set: verify via XML file or meta tag.
+  Navigate to 'AI Performance' report. Screenshot baseline data.
+· GTM: Correct container loads. No duplicate tags. Consent mode OK.
+· CMS: Confirm you can view AND edit pages (not just view).
+· Schema plugin (Yoast / RankMath / Schema Pro): installed and accessible.
+· Screaming Frog: licence valid. · SEMrush: client project accessible.
+
+FLAG IMMEDIATELY:
+· Any 2FA or permission issues
+· Access level lower than needed (View when Edit needed)
+· For any ❌: log specific error + person responsible
+
+DONE WHEN: ✅ on all platforms or documented escalation path for each ❌.`,
+        tools: 'GA4 · GSC · Bing WMT · GTM · CMS · Screaming Frog · SEMrush',
+        dependency: 'Task 5',
+      },
+      {
+        id: 't7', num: '07', qw: false, training: false, owner: 'CSM + Analyst',
+        name: 'Verify access to YouTube, social, review platforms, and GBP',
+        execution: `ADD TO ACCESS LOG (same sheet as task 6):
+YouTube Studio | LinkedIn | Facebook | Instagram | Twitter/X | Reddit
+GBP | Trustpilot | G2 | Capterra | Clutch | Yelp | Sector-specific platforms
+
+Mark ✅ or ❌ with blocker notes for each.
+
+IF PLATFORMS DON'T EXIST:
+· YouTube channel missing → flag as creation task.
+· No Trustpilot profile → do NOT default to creating one.
+  First check which review platforms include brand reviews (task 38).
+  Create only on high-influence platforms.
+· Request a @clientcompany email ID for account creation where needed.
+
+DONE WHEN: All social/review rows confirmed with status.`,
+        tools: 'GBP · YouTube Studio · Trustpilot · G2 · Capterra · Clutch',
+        dependency: 'Task 5',
+      },
+      {
+        id: 't8', num: '08', qw: false, training: false, owner: 'CSM',
+        name: 'Create Blockers Log — assign owner and resolution date for every gap',
+        execution: `1. Add tab 'Blockers Log' to Access Log Google Sheet.
+   Columns: Blocker Description | Platform | Impact if Unresolved | Owner | Target Resolution Date | Status
+
+2. Copy every ❌ from Access Log into this tab immediately.
+3. Assign owner (internal or client) + specific resolution date per blocker.
+4. Share with account manager.
+5. Flag in Basecamp which tasks in Days 5+ CANNOT START until each blocker is resolved.
+6. Send follow-up email for unresolved items with a hard deadline.
+
+DONE WHEN: Zero unowned blockers. Every item has owner + date + impact.`,
+        tools: 'Google Sheets · Basecamp · Email',
+        dependency: 'Tasks 6–7',
+      },
+      {
+        id: 't9', num: '09', qw: false, training: false, owner: 'CSM',
+        name: 'Verify GEO Audit status — check freshness before proceeding',
+        execution: `CSM reviews Google Drive for an existing GEO Audit document.
+
+IF NO AUDIT EXISTS:
+· Flag to delivery lead immediately.
+· Do not start strategy tasks until audit is confirmed.
+
+IF AUDIT IS < 2 MONTHS OLD:
+· Treat as valid input. Proceed.
+
+IF AUDIT IS > 2 MONTHS OLD:
+· Note which sections need refreshing:
+  - Entity data (company details, schema accuracy)
+  - AI snapshot (which LLMs cite the brand)
+  - Competitor citations (who appears now vs at audit)
+· Log as Basecamp to-do before team proceeds.
+
+DONE WHEN: Audit status confirmed and action flagged if needed.`,
+        tools: 'Google Drive · Basecamp',
+        dependency: 'Task 3',
+      },
+    ]
+  },
+  {
+    id: 'p2', phase: 'PHASE 2', phaseTag: 'tag-p2', phaseLabel: 'Audit & Baseline',
+    days: 'Days 2–14', color: '#065f46',
+    title: 'Strategic Alignment',
+    subtitle: 'Confirm business objectives, run the client kickoff, define the prompt set, and lock it with sign-off.',
+    tasks: [
+      {
+        id: 't10', num: '10', qw: false, training: false, owner: 'CSM',
+        name: 'Run client kickoff — capture goals, audience, markets, and 90-day success definition',
+        execution: `BEFORE THE CALL (24 hrs prior):
+· Send kickoff agenda Google Doc to client.
+· Send prep email: 'We have booked the meeting — prepare the following and bring key stakeholders.'
+· RECORD THE CALL.
+
+THE CALL (90 min):
+· Confirm project goal, timeline, scope (10 min).
+· Document answers to:
+  - Business goal in 90 days? (leads / revenue / awareness)
+  - Top 2–3 most valuable services or products?
+  - Primary buyer — who? What pain before finding this company?
+  - What questions do buyers ask before purchasing?
+  - Target geographies and languages?
+  - Compliance / legal / messaging restrictions?
+  - What does success look like at Day 30 / 60 / 90?
+  - Primary conversion actions (purchase / quote / contact / demo)?
+
+AFTER THE CALL (within 24 hrs):
+· Clean up notes. Send to client for sign-off via email.
+· Save confirmed doc in /01_Strategy.
+
+DONE WHEN: Client has confirmed the summary doc in writing.`,
+        tools: 'Google Meet · Google Docs (kickoff agenda template)',
+        dependency: 'Task 8',
+      },
+      {
+        id: 't11', num: '11', qw: false, training: false, owner: 'Analyst',
+        name: 'Identify primary audience segments, pain points, and key themes',
+        execution: `1. Analyst reviews existing client materials: past briefs · personas · previous audits.
+2. In kickoff (task 10): ask client to come prepared.
+3. Draft audience segment map:
+   Segment Name | Core Pain Points | Buying Questions | Decision Triggers
+   Branded Search Themes | Non-Branded Search Themes
+
+4. Share with CSM for review. Save in /01_Strategy.
+
+Note: Do NOT duplicate Brand Narrative. This is about buyer behaviour.`,
+        tools: 'Google Docs · Kickoff notes',
+        dependency: 'Task 10',
+      },
+      {
+        id: 't12', num: '12', qw: false, training: false, owner: 'CSM + Analyst',
+        name: 'Confirm target markets, geographies, languages, and compliance restrictions',
+        execution: `Covered in kickoff (task 10). Separately confirm:
+· All target countries and regions
+· Languages the site operates in
+· Compliance or regulatory restrictions (healthcare, finance, legal)
+· Claims requiring legal approval — flag in red in Brand Brief doc
+
+CSM confirms in kickoff or via follow-up email.
+Analyst logs in /01_Strategy.`,
+        tools: 'Kickoff notes · Google Docs',
+        dependency: 'Task 10',
+      },
+      {
+        id: 't13', num: '13', qw: false, training: false, owner: 'Analyst',
+        name: 'Identify key competitors in organic search AND AI answer environments',
+        execution: `AI COMPETITORS:
+1. Run manual prompt tests in ChatGPT and Perplexity for 3–5 category queries:
+   e.g. 'Best [service category] for [audience]'
+2. Log every brand appearing consistently across 2+ AI tools.
+
+ORGANIC COMPETITORS:
+3. Search client's 3 main keywords in Google. Note page 1.
+4. Cross-reference with SEMrush competitor overview.
+
+COMBINED:
+5. Merge into shortlist of 5–8 competitors.
+   For each: what they claim · who they serve · proof they show · how they appear in AI.
+
+Save competitor shortlist in /01_Strategy.`,
+        tools: 'ChatGPT · Perplexity · Google Search · SEMrush',
+        dependency: 'Task 10',
+      },
+      {
+        id: 't14', num: '14', qw: false, training: false, owner: 'CSM + Analyst',
+        name: 'Document differentiators, proof points, sensitive claims, and messaging rules',
+        execution: `CSM leads client session (in kickoff or dedicated call).
+
+Create differentiator table:
+Claim | Supporting Proof | Approved to use? (Yes / Needs sign-off / Do not use)
+
+For regulatory-sensitive claims (healthcare, finance, legal):
+· Flag in red in the table
+· Create Basecamp to-do for compliance review
+
+Analyst formats into Brand Source-of-Truth doc (task 33).
+
+DONE WHEN: Differentiator table complete with approval status on every claim.`,
+        tools: 'Google Docs · Brand brief template',
+        dependency: 'Tasks 10–13',
+      },
+      {
+        id: 't15', num: '15', qw: false, training: false, owner: 'CSM',
+        name: 'GEO ambition assessment — Leader (broad) or Focused (targeted)',
+        execution: `CSM facilitates 15-min discussion with client in kickoff or standalone call.
+
+Two options:
+· LEADER — broad category questions. Harder, longer timeline.
+· FOCUSED — specific high-value queries. Faster wins.
+
+Document decision in /01_Strategy. This scopes the prompt set and Month 2 priorities.
+
+DONE WHEN: Ambition level agreed and documented.`,
+        tools: 'Kickoff agenda · Google Docs',
+        dependency: 'Task 10',
+      },
+      {
+        id: 't16', num: '16', qw: false, training: true, owner: 'Analyst',
+        name: 'Define target prompt set — 10–20 natural-language queries, all 5 types',
+        execution: `SHEET COLUMNS:
+Prompt | Type | Platform to Test | Priority | Market/Language/Device Assumption | Frequency | Evidence Format
+
+REQUIRED PROMPT TYPES (at least 2 per type):
+· Branded: 'Tell me about [Company Name]'
+· Non-branded: 'Who are the best [service] providers for [audience]?'
+· Problem-solution: 'How do I solve [key pain point]?'
+· Comparison: '[Client] vs [Competitor]' · 'What's the difference between X and Y?'
+· Buyer-intent: 'Best [service] for [audience/situation]'
+
+EVIDENCE FORMAT TO DOCUMENT:
+Screenshots · Citations · Answer text · Competitors mentioned · Source URLs
+
+SCORING RULES (define before running):
+Brand Presence (Y/N) · Position (first/middle/end/absent) · Sentiment · Accuracy vs brand SOT · Citation quality
+
+⚠ REPEATABILITY NOTE: LLM answers vary. Track trends, not single data points. Do not overclaim precision.
+
+Market/language/device assumptions: document explicitly per prompt.
+
+DONE WHEN: All 5 types covered. Assumptions documented. Ready for client sign-off.`,
+        tools: 'Google Sheets · Kickoff notes',
+        dependency: 'Task 15',
+      },
+      {
+        id: 't17', num: '17', qw: false, training: true, owner: 'Analyst',
+        name: 'Run every prompt across all 5 LLMs — record baseline results and archive evidence',
+        execution: `TRACKING SHEET COLUMNS:
+Prompt | AI Tool | Brand Appears? (Y/N) | Exact Description Used | Cited URLs | Competitors Mentioned | Response Format (list/prose/table/none) | Platform Notes
+
+TEST ALL 5 PLATFORMS:
+ChatGPT (GPT-4o) · Gemini Advanced · Perplexity · Claude · Bing Copilot
+
+FOR EACH PROMPT × TOOL:
+1. Open AI tool in fresh browser tab (not cached session).
+2. Paste prompt exactly. Do not rephrase.
+3. Fill in all tracking sheet columns.
+4. Take full-page screenshot immediately.
+   Save to: /06_AI_Benchmarking/Day-1-Baseline/[Platform]/[Prompt-slug]_[YYYY-MM-DD].png
+   DATE-STAMP ALL FILES.
+
+AFTER ALL PROMPTS:
+Write 1-page summary:
+· X of Y prompts mention client
+· Top 3 competitors appearing most
+· 2 prompts highest priority to win
+· Patterns in which source types are cited
+
+DONE WHEN: Baseline sheet complete. Screenshots saved and date-stamped. Summary written.`,
+        tools: 'ChatGPT · Gemini Advanced · Perplexity · Claude · Bing Copilot · Google Sheets',
+        dependency: 'Task 16',
+      },
+      {
+        id: 't18', num: '18', qw: false, training: false, owner: 'CSM',
+        name: 'Lock prompt set with written client sign-off — this is the shared scorecard',
+        execution: `CSM emails completed prompt set Google Sheet to client.
+
+Email: 'Please confirm this list is accurate — it is our shared scorecard for Day 30/60/90 reviews. Reply with approval to proceed.'
+
+Wait for WRITTEN sign-off (email acceptable). Do not proceed until received.
+Log approval confirmation in Basecamp.
+
+DONE WHEN: Written sign-off received and logged.`,
+        tools: 'Email · Google Sheets · Basecamp',
+        dependency: 'Task 17',
+      },
+      {
+        id: 't19', num: '19', qw: false, training: false, owner: 'Analyst',
+        name: 'Deploy ongoing prompt tracking — set cadence, SOP, and recurring reminder',
+        execution: `1. Add 'Monthly Snapshot' tab to tracking sheet. Freeze header.
+   Columns: Date | Prompt | AI Tool | Brand Appears? | Description Used | Competitors Cited | Source URLs | Screenshot Link | Notes vs Last Month
+
+2. Set up recurring biweekly Basecamp task: 'Run GEO Prompt Check – [Client]'.
+   Assign to: [Analyst name].
+
+3. Use SEMrush AI Toolkit for automated monitoring where available.
+   Supplement manually for uncovered platforms.
+
+4. Write 1-page GEO Measurement Plan in Google Docs:
+   Which prompts · which AI tools · which metrics · how often · who owns
+   Save in /06_AI_Benchmarking.
+
+DONE WHEN: Tracking sheet live. SOP written. Recurring reminder set.`,
+        tools: 'SEMrush AI Toolkit · Google Sheets · Basecamp',
+        dependency: 'Task 18',
+      },
+    ]
+  },
+  {
+    id: 'p2b', phase: 'PHASE 2', phaseTag: 'tag-p2', phaseLabel: 'Audit & Baseline',
+    days: 'Days 2–5', color: '#065f46',
+    title: 'Measurement & Analytics',
+    subtitle: 'Validate all tracking is live and accurate before you rely on any data. Set up the KPI dashboard.',
+    tasks: [
+      {
+        id: 't20', num: '20', qw: false, training: false, owner: 'Analyst',
+        name: 'Validate GA4, GSC, and Bing WMT — verify commercial conversion events fire',
+        execution: `GA4 VALIDATION:
+· Admin → Data Streams → green status.
+· Realtime: visit site → appear within seconds.
+· DebugView: trigger each conversion on live site. Confirm events fire:
+  form_submit · phone_number_click · purchase / get-a-quote / contact · demo request
+  If NO conversion events exist: agree supportive actions with client (PDF download, scroll, video play).
+  Ensure tracking in place. Log as Priority Fix in Basecamp.
+· GTM: consent mode configured · no duplicate tags · cross-domain working.
+
+GSC VALIDATION:
+· Confirm property type (Domain property preferred).
+· Verify ownership active (Settings → Ownership verification).
+· Performance → confirm 3+ months of clicks and impressions.
+· Note exact canonical domain tracked.
+
+BING WEBMASTER TOOLS:
+· Log in at bing.com/webmasters.
+· If not set up: XML file or meta tag verification. Alert CSM immediately.
+· Navigate to 'AI Performance' report. Screenshot baseline.
+· Sitemaps tab: confirm sitemap submitted.
+
+DONE WHEN: GA4, GSC, Bing WMT confirmed live. All issues logged with owner and deadline.`,
+        tools: 'GA4 · GTM Preview Mode · GSC · Bing WMT',
+        dependency: 'Task 6',
+      },
+      {
+        id: 't21', num: '21', qw: false, training: false, owner: 'Analyst',
+        name: 'Export SEO performance baseline from GA4, GSC, and Bing WMT',
+        execution: `GA4 EXPORTS:
+· Traffic Acquisition → filter Organic Search → Last 12 months → Export CSV
+· Key Events → filter Organic → same window → Export CSV
+· Identify: top 10 pages by organic traffic + top 10 by conversions.
+
+GSC EXPORTS:
+· Performance → Last 12 months → Export CSV
+· Repeat with: branded queries only filter · non-branded queries only filter
+· Flag pages with high impressions but CTR under 2% (near-win pages).
+
+BING WMT EXPORTS:
+· Reports → Search Performance → Last 6 months → Export
+· KEEP BING DATA SEPARATE from GSC — different audience segment.
+
+SAVE ALL FILES:
+· Folder: /09_Reporting/Baseline_Data/
+· Filename: [Platform]_baseline_[YYYY-MM-DD].csv
+
+DONE WHEN: All exports saved with today's date. Three page lists documented.`,
+        tools: 'GA4 · GSC · Bing WMT · Google Sheets',
+        dependency: 'Task 20',
+      },
+      {
+        id: 't22', num: '22', qw: false, training: false, owner: 'Analyst',
+        name: 'Set up GEO visibility tracking, brand mention monitoring, and KPI dashboard',
+        execution: `FOLDER:
+/06_AI_Benchmarking/Monthly-Snapshots/Month-1/
+Copy task 17 baseline screenshots and sheet here.
+
+GOOGLE ALERTS:
+· Brand name · key executive names · top 3 competitors
+· Frequency: 'As it happens'. Send to shared team inbox.
+· SEMrush Brand Monitoring: configure if available.
+
+KPI DASHBOARD (Google Looker Studio):
+Connect to GA4 + GSC. Bing WMT pasted in manually each month.
+
+6 metric sections with exact definitions:
+1. AI Search Health Score = (Prompts where client appears ÷ Total prompts) × 100
+2. AI Visibility Score = Count of distinct platforms where client appears ≥ once
+3. Share of Voice = Client appearances ÷ (Client + All competitors) × 100
+4. Brand Mentions = Total Google Alerts hits per month
+5. Citations = Times client URLs appear as sources in AI responses
+6. Cited Pages = List of specific client pages cited in AI responses
+
+Add Month-vs-Month comparison column to every metric.
+Populate with Month 1 baseline data.
+
+DONE WHEN: Dashboard live. All 6 metrics have Month 1 values. Alerts confirmed.`,
+        tools: 'Google Alerts · SEMrush Brand Monitoring · Looker Studio · Google Sheets',
+        dependency: 'Tasks 17–21',
+      },
+    ]
+  },
+  {
+    id: 'p2c', phase: 'PHASE 2', phaseTag: 'tag-p2', phaseLabel: 'Audit & Baseline',
+    days: 'Days 3–7', color: '#065f46',
+    title: 'Technical SEO Audit',
+    subtitle: 'Full technical crawl, crawlability checks, CWV, and prioritised findings log.',
+    tasks: [
+      {
+        id: 't23', num: '23', qw: false, training: false, owner: 'Analyst',
+        name: 'Run full technical crawl — HTTPS, status codes, redirects, and parameter risks',
+        execution: `SCREAMING FROG SETUP:
+· Enable JS rendering: Spider → Configuration → Rendering → JavaScript.
+· Output columns: URL · Status Code · Title · Meta Description · H1 · Canonical · Indexability · Word Count · Inlinks.
+· Run full crawl. Save crawl file to /02_Technical_Audit/[YYYY-MM-DD]_crawl.
+Run SEMrush Site Audit in parallel.
+
+HTTPS & PROTOCOL (score Pass/Fail/Needs Work):
+· http:// must redirect to https://
+· www and non-www must resolve to same canonical
+· Check both variants end at same final URL
+
+REDIRECT HEALTH:
+· Screaming Frog → Response Codes → 301/302
+· Flag chains (A→B→C). All should be direct (A→C).
+
+STATUS CODES:
+· Filter 404s → export → note which are internally linked (fix first)
+· Filter 5xx → flag ALL as Critical
+· Confirm homepage · service pages · contact → return 200
+
+DUPLICATE URL / PARAMETER RISKS:
+· Screaming Frog → URL Parameters report
+· Check: faceted navigation · session IDs · internal search pages · tag/category pages · pagination
+· Log parameter risks: Canonical or Noindex recommended
+
+AUDIT LOG COLUMNS:
+Issue | URL(s) | Severity (Critical/High/Medium/Low) | Effort (Quick Fix/Needs Dev) | Fix | Owner
+
+DONE WHEN: Crawl saved. All issues logged with severity and effort.`,
+        tools: 'Screaming Frog · SEMrush Site Audit · Browser',
+        dependency: 'Task 6',
+      },
+      {
+        id: 't24', num: '24', qw: false, training: false, owner: 'Analyst',
+        name: 'Review crawlability, sitemaps, site architecture, rendering, and Core Web Vitals',
+        execution: `Score each check: Pass / Fail / Needs Work
+
+CRAWLABILITY & ROBOTS.TXT:
+· Visit [domain]/robots.txt. Flag /services/ /blog/ /products/ blocked → Critical.
+· Screaming Frog → Directives → Noindex → important pages accidentally hidden?
+
+INDEXABILITY & CANONICALS:
+· Screaming Frog → Canonicals → any pointing to unexpected URL?
+· Check /page and /page/ — both indexable? (should be only one)
+
+XML SITEMAP:
+· Visit [domain]/sitemap.xml → 200? Loads correctly?
+· GSC → Sitemaps: submitted? Any errors?
+· Bing WMT → Sitemaps: submitted here too?
+· Screaming Frog → sitemap URLs match crawlable 200-status pages only.
+
+SITE ARCHITECTURE:
+· Crawl Depth column → priority commercial pages within 3 clicks of homepage.
+· Check key pages in main nav AND footer.
+· Filter 0 inlinks → orphan pages. Flag ALL.
+
+RENDERING:
+· Compare rendered vs non-rendered in Screaming Frog.
+· Content disappearing without JS → Critical GEO risk.
+
+CORE WEB VITALS (PageSpeed Insights — mobile mode):
+· Homepage + 2–3 priority commercial pages.
+· Record: LCP (pass <2.5s) · INP (pass <200ms) · CLS (pass <0.1)
+· Flag failures.
+
+DONE WHEN: All checks Pass/Fail/Needs Work. Every issue has severity + effort.`,
+        tools: 'Screaming Frog · GSC · Bing WMT · PageSpeed Insights · Browser',
+        dependency: 'Task 23',
+      },
+      {
+        id: 't25', num: '25', qw: false, training: false, owner: 'Analyst',
+        name: 'Prioritise all technical findings — severity, effort, quick wins vs dev-dependent',
+        execution: `In audit log Google Sheet, add columns:
+· Severity: Critical / High / Medium / Low
+· Effort: Quick Fix (no developer) / Needs Developer
+· Owner
+· Phase: Q-Win (Days 1–30) / Month 2 (31–60) / Month 3 (61–90)
+
+Sort by: Severity (Critical first) + Effort (Quick Fix first).
+
+Separate into three groups:
+· Quick Wins: no developer, implement Phase 3 (Days 15–24)
+· Medium effort: 2–4 weeks
+· Heavy lift / dev-dependent: development sprint
+
+CSM reviews before client delivery.
+
+DONE WHEN: Every issue has severity + effort + phase tag. Quick wins list isolated.`,
+        tools: 'Audit log Google Sheet · Basecamp',
+        dependency: 'Tasks 23–24',
+      },
+    ]
+  },
+  {
+    id: 'p2d', phase: 'PHASE 2', phaseTag: 'tag-p2', phaseLabel: 'Audit & Baseline',
+    days: 'Days 5–10', color: '#065f46',
+    title: 'Schema, Content & GEO Readiness',
+    subtitle: 'Audit structured data, review all content, and assess the site\'s AI readability.',
+    tasks: [
+      {
+        id: 't26', num: '26', qw: false, training: false, owner: 'Analyst',
+        name: 'Inventory all schema, validate entity schema and page-level coverage',
+        execution: `SCHEMA INVENTORY SHEET COLUMNS:
+Page URL | Schema Types Present | Errors Found | Priority to Fix (Critical/High/Medium/Low)
+
+1. Screaming Frog → Structured Data tab → export all types by page.
+2. Cross-reference against GSC Rich Results report.
+
+ORGANISATION / LOCALBUSINESS:
+· Rich Results Test on homepage + Schema.org validator.
+· Confirm these fields match live content EXACTLY:
+  name · logo URL · URL · telephone · address · email · sameAs (social profiles)
+· Flag outdated addresses, old phone numbers, discontinued products.
+
+PAGE-LEVEL COVERAGE (check each page type):
+· Service pages → Service schema
+· Blog posts → Article schema (with author Person schema)
+· FAQ pages → FAQPage schema
+· Product pages → Product schema
+· Team pages → Person schema
+· Video content → VideoObject schema
+· Breadcrumbs → BreadcrumbList schema
+
+DONE WHEN: Schema inventory complete. All errors logged with priority.`,
+        tools: 'Screaming Frog · Rich Results Test · Schema.org validator',
+        dependency: 'Task 23',
+      },
+      {
+        id: 't27', num: '27', qw: false, training: false, owner: 'Analyst',
+        name: 'Fix broken schema, add missing schema, and evaluate Speakable',
+        execution: `FIX ERRORS FROM TASK 26 (Critical first):
+· Most fixes via CMS plugin (Yoast / RankMath / Schema Pro) — no coding needed.
+· After each fix: re-validate in Rich Results Test immediately.
+
+ADD MISSING SCHEMA to priority pages.
+For Article schema: always include author Person schema.
+
+SPEAKABLE SCHEMA — EVALUATE PER CLIENT:
+⚠ Speakable is currently Beta per Google's own docs. It is tied to text-to-speech use cases, not a confirmed GEO signal.
+
+Only implement if:
+  a) Client has strong FAQ / definition / how-to content
+  b) Evidence exists that Speakable benefits similar sites
+
+If implementing:
+· Target 3–5 pages with clear factual answers (FAQ, definitions, how-it-works)
+· Add schema referencing specific section headings/paragraphs
+· Test each in Rich Results Test
+
+UNFIXED ITEMS: Add to Month 2 backlog in Basecamp with URL | Schema Type | Priority.
+
+DONE WHEN: All Critical schema errors fixed. Re-tests confirm no errors.`,
+        tools: 'CMS schema plugin · Rich Results Test · Schema.org',
+        dependency: 'Task 26',
+      },
+      {
+        id: 't28', num: '28', qw: false, training: false, owner: 'Analyst',
+        name: 'Create full page inventory and assign priority tiers',
+        execution: `Build Google Sheet 'Content_Page_Inventory_[YYYY-MM-DD]':
+URL | Page Type | Word Count | Indexable (Y/N) | Schema Present (Y/N)
+Monthly Organic Sessions (GA4) | Organic Conversions (GA4)
+Avg Position Google (GSC) | Avg Position Bing (Bing WMT)
+
+PRIORITY TIERS:
+TIER 1 — Fix first:
+· Pages generating leads or revenue
+· Pages ranking positions 5–20 (near-win — small improvement = big traffic gain)
+· Pages that SHOULD appear in AI answers but currently don't
+
+TIER 2 — Fix next:
+· High-traffic pages with low conversion rate
+· Thin or outdated pages with moderate traffic
+
+LOW PRIORITY:
+· Minimal traffic, low strategic importance
+
+Save in /03_Content_Audit. Top 15–20 pages go to detailed review.
+
+DONE WHEN: All pages listed. Priority tiers assigned.`,
+        tools: 'Screaming Frog · GA4 · GSC · Bing WMT · CMS · Google Sheets',
+        dependency: 'Tasks 20–21',
+      },
+      {
+        id: 't29', num: '29', qw: false, training: false, owner: 'Analyst',
+        name: 'Review metadata, content quality, and page clarity across Tier 1 pages',
+        execution: `METADATA (Screaming Frog → Page Titles / Meta Descriptions / H1 tabs):
+· Title: unique? Under 60 chars? States topic AND who it's for?
+· Meta description: under 160 chars? Compelling reason to click?
+· H1: exactly ONE per page? Specific and relevant?
+
+CONTENT QUALITY — score each page 1–3:
+Depth (1=thin, 3=comprehensive) · Freshness (1=outdated, 3=current) · Uniqueness (1=generic, 3=distinctive)
+
+Flag as thin:
+· Under 300 words on a commercial page
+· Under 400 words on an informational page
+
+Flag as generic:
+· Starts 'We are a leading provider of…'
+· No specific proof, examples, or differentiators
+
+PAGE CLARITY — Page Clarity Checklist (Pass/Fail per criterion):
+□ Page explains what it's about within first paragraph
+□ Opening answers core buyer question directly
+□ Buyer questions answered on the page
+□ Clear, specific CTA present
+□ Internal links to related pages
+
+LOG ALL ISSUES:
+Page URL | Issue Type | Current State | Recommended Fix | Priority | Score (1–3)
+
+DONE WHEN: Every Tier 1 page reviewed. All issues logged with scores.`,
+        tools: 'Screaming Frog · Browser · CMS · Google Sheets',
+        dependency: 'Task 28',
+      },
+      {
+        id: 't30', num: '30', qw: true, training: false, owner: 'Analyst + Content Lead',
+        name: 'Rewrite metadata, restructure headings, add FAQs, and fix on-page elements',
+        execution: `METADATA REWRITES:
+· Title = [Primary Entity] | [Differentiator] | [Brand Name] (under 60 chars)
+  Example: 'Cloud Security for Mid-Market Finance Teams | Clearpath'
+· Meta = direct answer to core intent + soft CTA (under 160 chars)
+  Example: 'See how Clearpath reduces breach risk for finance teams. Learn how it works →'
+
+IMAGE ALT TEXT:
+· All images on Tier 1 pages: describe naturally.
+  Bad: 'image001' | Good: 'Cloud dashboard showing live threat monitoring'
+
+INTERNAL LINKS:
+· Each Tier 1 page links to 2–3 other relevant pages.
+· Anchor text: Bad: 'click here' | Good: 'See our managed security services'
+
+HEADING RESTRUCTURE:
+· Rewrite H2/H3 to questions or numbered formats:
+  Before: 'Our Services' → After: 'What services does [Company] offer?'
+  Before: 'Benefits' → After: '5 key benefits of [service] for [audience]'
+
+FAQ SECTIONS:
+· Add to every Tier 1 page lacking one.
+· Source: kickoff notes · Google PAA · target prompt set (task 16).
+· 4–8 FAQs per page. Natural language — as someone types into an AI tool.
+· Apply FAQPage schema to every FAQ section.
+
+ANSWER-FIRST INTRO:
+· First 2–3 sentences answer the core question directly.
+· Supporting detail follows. Never bury the answer.
+
+DONE WHEN: All Tier 1 pages have updated metadata, alt text, links, headings, FAQs, answer-first intros.`,
+        tools: 'CMS · Google Search (PAA) · SEMrush · Screaming Frog',
+        dependency: 'Task 29',
+      },
+      {
+        id: 't31', num: '31', qw: false, training: false, owner: 'Analyst',
+        name: 'Flag thin pages and categorise all content issues into prioritised backlog',
+        execution: `FIND THIN PAGES:
+· Screaming Frog → Readability tab → under 400 words (informational) / under 300 words (commercial).
+For each thin page: Expand | Merge | Delete/Noindex
+
+THIN CONTENT ACTION LIST:
+Page URL | Word Count | Page Type | Action | Priority
+
+CATEGORISE ALL CONTENT ISSUES:
+· Metadata — titles, meta descriptions, H1s
+· Structure — headings, FAQs, formatting
+· Quality — thin, outdated, generic copy
+· Trust — missing proof, no CTA, no author bio
+· GEO-specific — not answer-ready, no extractable facts, no FAQs
+
+TAG EACH ITEM:
+Quick Fix (no developer) · Month 2 task · Developer-dependent
+
+DONE WHEN: Thin content list documented. All issues categorised and tagged.`,
+        tools: 'Screaming Frog · Google Sheets',
+        dependency: 'Task 29',
+      },
+      {
+        id: 't32', num: '32', qw: false, training: false, owner: 'Analyst',
+        name: 'GEO Readiness audit — brand clarity, content structure, extractable elements',
+        execution: `BRAND CLARITY (homepage — within first scroll, Pass/Fail/Needs Work):
+□ What does this company do? — clear within 10 seconds
+□ Who is it for? — stated explicitly
+□ Why is it different? — a real differentiator, not 'leading provider'
+Check same on all Tier 1 service/product pages.
+
+OFFERING CLARITY (service pages):
+For each: simple language · who it's for · when to use · how it works · what happens next
+
+TERMINOLOGY CONSISTENCY:
+· Screaming Frog Search tab → check each core offering name.
+· Flag: same product called different things across menus / headings / URLs / body / schema.
+
+ANSWER-FIRST FORMATTING:
+· First 100 words answer the core question. Supporting detail follows.
+· Content in short, scannable blocks.
+
+EXTRACTABLE CONTENT ELEMENTS (log Present/Missing per page):
+□ Factual statements with specifics
+□ Definitions of key terms
+□ Step-by-step how-it-works sections
+□ FAQ sections
+□ Comparison-style content ('X vs Y')
+□ Numbered lists and structured tables
+
+SEMRUSH AI TOOLKIT:
+· Run analysis for client domain + top 3 competitors.
+· Export: share of voice · sentiment · competitor citation list.
+· Save to /05_GEO_Readiness/SEMrush_AI_Baseline_[YYYY-MM-DD].
+
+DONE WHEN: GEO readiness scored per page. Extractable gaps documented. SEMrush report saved.`,
+        tools: 'Browser · Screaming Frog · SEMrush AI Toolkit · Mridul\'s GEO tools',
+        dependency: 'Task 29',
+      },
+    ]
+  },
+  {
+    id: 'p2e', phase: 'PHASE 2', phaseTag: 'tag-p2', phaseLabel: 'Audit & Baseline',
+    days: 'Days 7–14', color: '#065f46',
+    title: 'Brand, Trust & Off-Site',
+    subtitle: 'Create the brand source-of-truth, audit trust signals, review internal linking, and map brand signals.',
+    tasks: [
+      {
+        id: 't33', num: '33', qw: false, training: false, owner: 'CSM + Senior Analyst',
+        name: 'Create the brand source-of-truth document — single approved reference for all GEO work',
+        execution: `Create Google Doc: '[Client Name] – Brand Source of Truth'
+Share with: writers · strategists · implementers · approvers
+
+⚠ Do NOT proceed with content changes in Month 2 until client sign-off on this document.
+
+SECTION 1 — Company Descriptions (sign-off required on both):
+· 25-word version: for schema and AI answers — 1 specific sentence
+· 75-word version: for About pages and press — 3–5 sentences
+  Good: 'B2B SaaS cybersecurity platform for mid-market finance teams'
+  Bad: 'tech company'
+
+SECTION 2 — Category labels (2–3 specific labels the brand should own)
+
+SECTION 3 — Service/product naming rules:
+Approved Full Name | Acceptable Short Name | Forbidden Variations
+
+SECTION 4 — Target audience labels and pain point descriptions
+
+SECTION 5 — Approved differentiators + evidence:
+Differentiator | Supporting Evidence | Claim Status (Approved / Needs sign-off)
+
+SECTION 6 — Tone rules:
+· 3 things to always do
+· 3 things to never say
+
+SECTION 7 — Claims requiring compliance approval
+
+SECTION 8 — AI Description Brief:
+Write 3–5 preferred 'AI answer paragraphs'.
+Frame as instructions: 'When describing [Company], always mention X. Emphasise Y. Never describe as Z.'
+
+DONE WHEN: Document complete. Client-approved. Shared in /01_Strategy.`,
+        tools: 'Google Docs · Kickoff notes · Differentiator table',
+        dependency: 'Tasks 10–14',
+      },
+      {
+        id: 't34', num: '34', qw: false, training: false, owner: 'Analyst + CSM',
+        name: 'Audit all trust signals, GBP, review platforms, Wikipedia, and Wikidata',
+        execution: `COMPANY-LEVEL TRUST (Pass/Fail/Needs Work):
+□ About page — complete, not generic
+□ Contact page — real address, phone, email
+□ Legal entity name visible
+□ Privacy Policy · Terms & Conditions · Cookie policy
+
+EXPERTISE & AUTHORSHIP:
+□ Named authors on ALL blog posts
+□ Author bios: credentials · experience · qualifications · media appearances
+□ Team / Experts page with names and photos
+□ Person schema on author/team pages
+
+PROOF ON COMMERCIAL PAGES:
+□ Testimonials
+□ Case studies with quantified results ('Reduced costs by 35%' NOT 'great results')
+□ Client logos · Certifications · Awards
+□ Major differentiators: supported by linked source, data point, or case study?
+
+GOOGLE BUSINESS PROFILE:
+· Log in at business.google.com
+· Description (using brand SOT language) · correct primary + secondary categories
+· Q&A answered · post in last 30 days · photos uploaded
+
+REVIEW PLATFORMS:
+⚠ Do NOT default to creating Trustpilot immediately.
+· First: run brand mentions to identify which platforms already include brand reviews.
+· Check which platforms appear in AI citation results.
+· For each active platform: profile claimed · description complete · unanswered reviews responded to.
+
+WIKIPEDIA / WIKIDATA (LLMs draw heavily from these):
+· Search Wikipedia for brand + key executives.
+· Check Wikidata at wikidata.org for entity record accuracy.
+· Log: Present / Absent / Inaccurate.
+· ⚠ Flag as off-site priority if competitors are cited via Wikipedia but client has no entry.
+
+MISSING TRUST ASSETS:
+Page URL | Missing Element | Recommended Action | Priority
+Add to Month 2 backlog in Basecamp.
+
+DONE WHEN: Trust audit complete. GBP updated. Review responses drafted.`,
+        tools: 'Browser · GBP · Trustpilot · G2 · Capterra · Wikipedia · Wikidata',
+        dependency: 'Task 33',
+      },
+      {
+        id: 't35', num: '35', qw: false, training: false, owner: 'Analyst',
+        name: 'Review internal linking structure, find orphan pages, and build improvement list',
+        execution: `UNDER-LINKED PRIORITY PAGES:
+· Screaming Frog → Inlinks tab
+· Any Tier 1 page with fewer than 3 inbound links → flag immediately.
+
+ORPHAN PAGES:
+· Filter pages with 0 inlinks → flag ALL (invisible to crawlers AND AI scrapers).
+
+NAVIGATION AND FOOTER:
+· Manually check: is each Tier 1 page in main nav or footer? If not → flag.
+
+CROSS-LINKING BETWEEN PAGE TYPES:
+· 5 blog posts: do they link to commercial pages?
+· 5 service pages: do they link to case studies?
+· Case study pages: do they link to core solutions?
+
+ANCHOR TEXT QUALITY:
+· Bad: 'click here' / 'learn more'
+· Good: 'See our managed security services' / 'Read the [Client] case study'
+
+SITE ARCHITECTURE:
+· Map top 2 nav levels in Google Sheet.
+· Are key commercial pages in nav or buried?
+
+IMPROVEMENT LIST:
+Source Page | Destination Page | Recommended Anchor Text | Priority | Notes
+Add Month 2 fixes to Basecamp backlog.
+
+DONE WHEN: Improvement list saved. Orphan and under-linked pages identified.`,
+        tools: 'Screaming Frog · Browser · Google Sheets',
+        dependency: 'Tasks 23–28',
+      },
+      {
+        id: 't36', num: '36', qw: false, training: false, owner: 'Analyst',
+        name: 'Run structured AI tests for client and competitors across all 5 LLMs',
+        execution: `TRACKING SHEET COLUMNS:
+Prompt | AI Tool | Brand Appears? (Y/N) | Exact Description Used | Cited URLs | Competitors Mentioned | Response Format | Platform Notes
+
+CLIENT AI TEST: every prompt × every tool.
+COMPETITOR AI TEST: same prompts for each competitor. Add competitor columns.
+
+NARRATIVE ACCURACY:
+· Compare all AI-generated client descriptions against Brand SOT (task 33).
+· Flag inaccuracies. Identify which URLs drive the current narrative — own site vs third-party.
+
+SOURCE PATTERNS:
+· Which source types cited most? (own site / press / directories / review sites)
+· Which prompts is brand absent from entirely?
+· What response format do AI tools favour?
+
+ARCHIVE ALL EVIDENCE:
+/06_AI_Benchmarking/Month-1-Evidence/[Platform]/[Prompt-slug]_[YYYY-MM-DD].png
+Date-stamp everything.
+
+WRITE 1-PAGE INSIGHT NOTE:
+· Top 3 reasons competitors outperform client in AI visibility
+· Patterns in source types cited
+
+CITATION GAPS:
+· Top 3 authoritative sources where competitors appear but client doesn't.
+· These become Month 2 outreach targets.
+
+DONE WHEN: All prompts run. Screenshots saved. Insight note written.`,
+        tools: 'ChatGPT · Gemini Advanced · Perplexity · Claude · Bing Copilot · Google Sheets',
+        dependency: 'Tasks 17–18',
+      },
+      {
+        id: 't37', num: '37', qw: false, training: false, owner: 'Analyst',
+        name: 'Systematically review top 3–5 competitors for AI retrieval readiness',
+        execution: `Score in Competitor Analysis Google Sheet (each scored 1–3):
+
+CLARITY AND POSITIONING:
+· Offering clarity: 1=vague, 2=clear, 3=specific with examples
+· Audience clarity: 1=generic, 2=identified, 3=named with pain points
+· Differentiator clarity: 1=generic claims, 2=some proof, 3=specific evidence
+
+CONTENT FOR AI RETRIEVAL (Present/Absent):
+□ FAQ sections · Definition blocks · Comparison tables · Numbered lists · Summary paragraphs
+
+TRUST AND PROOF:
+□ Named experts · Case study pages · Certifications · Testimonials with specifics
+
+BREADTH AND CORROBORATION:
+· Run full prompt set with each competitor as subject.
+· Record frequency and which third-party sources cite them.
+
+COMPETITOR ADVANTAGE SUMMARY (1-page doc):
+1. Top 3 competitor strengths
+2. Gap map: where client underperforms on Clarity | Structure | Proof | AI Readiness
+
+CITATION GAP LOG:
+Source Name | URL | Why They Cite Competitors | Recommended Action for 60-day phase
+
+DONE WHEN: Competitor sheet with 1–3 scores. Advantage summary. Citation gap log saved.`,
+        tools: 'Browser · SEMrush · ChatGPT · Perplexity · Google Sheets',
+        dependency: 'Task 36',
+      },
+      {
+        id: 't38', num: '38', qw: false, training: false, owner: 'Analyst',
+        name: 'Map brand mention baseline, NAP consistency, source influence, and platform opportunities',
+        execution: `BRAND MENTION BASELINE:
+· SEMrush Brand Monitoring: export unlinked mentions. Total count + top source types = Month 1 baseline.
+· Google search brand name (no quotes): review pages 1–3.
+
+NAP CONSISTENCY (Name, Address, Phone) — check these 10 specific sources:
+1. Google Business Profile
+2. Homepage footer
+3. Schema markup (Screaming Frog)
+4. Wikipedia (if present)
+5. Wikidata
+6. Yelp
+7. Bing Places
+8. Apple Maps
+9. Yellow Pages
+10. One sector-specific directory
+
+NAP AUDIT SHEET:
+Source | Name (Recorded) | Address (Recorded) | Phone (Recorded) | Match? | Fix Required
+Flag even small discrepancies: abbreviations · old phone numbers · punctuation.
+
+SOURCE INFLUENCE MAPPING:
+Review AI results + competitor citation data.
+Build ranked influence source list: Source | URL | Type | Competitor Present? | Client Present?
+
+PLATFORM OPPORTUNITY MAP:
+Platform | Competitor Present? | Client Present? | Quality | Effort to Improve | Priority
+Platforms: Reddit (subreddits) · YouTube · LinkedIn · sector forums · industry directories
+
+DRAFT OFF-SITE PLATFORM STRATEGY (1-page):
+For top 3 priority platforms: Objective · Content approach · Frequency · Owner
+
+DONE WHEN: Mention baseline recorded. NAP discrepancies logged. Platform strategy drafted.`,
+        tools: 'SEMrush Brand Monitoring · Google Alerts · Browser · Google Sheets',
+        dependency: 'Task 36',
+      },
+    ]
+  },
+  {
+    id: 'p3', phase: 'PHASE 3', phaseTag: 'tag-p3', phaseLabel: 'Quick Wins',
+    days: 'Days 15–24', color: '#92400e',
+    title: 'Quick Wins Implementation',
+    subtitle: 'No-developer improvements live within the 30 days. Every task here should be shipped.',
+    tasks: [
+      {
+        id: 'tQW-T1', num: 'QW-T1', qw: true, training: false, owner: 'Analyst + Dev',
+        name: 'Fix redirect chains and broken links from technical audit',
+        execution: `From task 23 export: filter redirect chains (3+ hops) and 4xx errors.
+Fix chains in CMS or .htaccess so all redirect directly (A→C, not A→B→C).
+Fix or redirect broken 4xx pages that are internally linked.
+Re-crawl in Screaming Frog after each batch of fixes.
+DONE WHEN: No redirect chains. No internally-linked 4xx errors.`,
+        tools: 'Screaming Frog · CMS / .htaccess',
+        dependency: 'Task 23 findings',
+      },
+      {
+        id: 'tQW-T2', num: 'QW-T2', qw: true, training: false, owner: 'Analyst',
+        name: 'Submit updated XML sitemap to GSC and Bing WMT',
+        execution: `Update sitemap to include ONLY indexable 200-status pages.
+Remove noindexed, redirected, or 4xx pages.
+Upload to GSC → Sitemaps. Upload to Bing WMT → Sitemaps.
+Confirm no errors on either platform.
+DONE WHEN: Updated sitemap live. No errors in GSC or Bing WMT.`,
+        tools: 'CMS sitemap plugin · GSC · Bing WMT',
+        dependency: 'Task 24',
+      },
+      {
+        id: 'tQW-T3', num: 'QW-T3', qw: true, training: false, owner: 'Analyst',
+        name: 'Fix accidental noindex tags on important pages',
+        execution: `From task 24 audit: identify priority pages with incorrect noindex tags.
+Update meta robots tags in CMS to remove noindex.
+Verify fix using GSC URL Inspection tool after publishing.
+DONE WHEN: All priority pages return correct indexable status in GSC.`,
+        tools: 'CMS · GSC URL Inspection',
+        dependency: 'Task 24',
+      },
+      {
+        id: 'tQW-S1', num: 'QW-S1', qw: true, training: false, owner: 'Analyst',
+        name: 'Implement Organisation/LocalBusiness schema fixes on homepage',
+        execution: `Update JSON-LD in homepage template:
+Fix: name · logo URL · URL · telephone · address · email · sameAs (all social profiles)
+Validate in Rich Results Test BEFORE publishing.
+Confirm all fields match live content exactly — no outdated information.
+DONE WHEN: Rich Results Test shows no errors on homepage schema.`,
+        tools: 'CMS · Rich Results Test',
+        dependency: 'Task 26',
+      },
+      {
+        id: 'tQW-S2', num: 'QW-S2', qw: true, training: false, owner: 'Analyst',
+        name: 'Add missing FAQ schema to top informational and commercial pages',
+        execution: `Add FAQPage JSON-LD to pages where FAQ content was added in task 30.
+Test each page in Rich Results Test after adding.
+Confirm FAQ schema and FAQ content match exactly.
+DONE WHEN: All FAQ pages with content also have validated FAQ schema.`,
+        tools: 'CMS · FAQ schema plugin · Rich Results Test',
+        dependency: 'Task 30',
+      },
+      {
+        id: 'tQW-C1', num: 'QW-C1', qw: true, training: false, owner: 'Analyst',
+        name: 'Publish updated metadata for top 20 priority pages',
+        execution: `Implement rewritten title tags and meta descriptions from task 30 in CMS.
+Use bulk editor if available.
+Check each page renders title correctly in browser tab after publishing.
+DONE WHEN: All 20 priority pages show updated metadata.`,
+        tools: 'CMS metadata editor · Screaming Frog',
+        dependency: 'Task 30',
+      },
+      {
+        id: 'tQW-C2', num: 'QW-C2', qw: true, training: false, owner: 'Analyst + Content Lead',
+        name: 'Restructure headings on priority informational pages to question format',
+        execution: `Implement heading rewrites from task 30 in CMS.
+Check page renders correctly after publishing — no broken layout.
+Verify H1 is exactly one per page.
+DONE WHEN: All priority informational pages have question-led or numbered H2/H3.`,
+        tools: 'CMS',
+        dependency: 'Task 30',
+      },
+      {
+        id: 'tQW-C3', num: 'QW-C3', qw: true, training: false, owner: 'Analyst + Content Lead',
+        name: 'Publish FAQ blocks on top 5 commercial and informational pages',
+        execution: `Implement FAQ content and FAQPage schema from task 30 on top 5 pages.
+Review formatting before publishing — questions and answers must display cleanly.
+Confirm schema validates in Rich Results Test after publishing.
+DONE WHEN: FAQ blocks live on 5 pages. Schema validated on all.`,
+        tools: 'CMS · FAQ schema plugin · Rich Results Test',
+        dependency: 'Task 30',
+      },
+      {
+        id: 'tQW-C4', num: 'QW-C4', qw: true, training: false, owner: 'Content Lead',
+        name: 'Add answer-first summary paragraphs to top 5 informational pages',
+        execution: `Write 2–3 sentence answer-first intro for each page based on task 32.
+The intro must: answer the core question in the first sentence · be above the fold · not be marketing copy.
+
+Example: For a cloud security page:
+'Cloud security refers to the tools and policies that protect data, apps, and infrastructure in the cloud. It is essential for any business storing sensitive customer or financial data online. [Company] provides [specific solution] for [specific audience].'
+
+Implement in CMS above all other body content.
+DONE WHEN: Answer-first intro live on 5 pages. Each is 2–3 sentences answering the core question.`,
+        tools: 'CMS',
+        dependency: 'Task 32',
+      },
+      {
+        id: 'tQW-C5', num: 'QW-C5', qw: true, training: false, owner: 'Analyst + Content Lead',
+        name: 'Add internal links from high-traffic blog posts to priority commercial pages',
+        execution: `From task 35 audit: identify top 5 blog posts with most organic traffic + NO link to commercial pages.
+For each blog: find a natural contextual opportunity to add a link.
+Anchor text must be descriptive and specific.
+  Bad: 'click here' / 'learn more'
+  Good: 'See how [Company] delivers [service]'
+Implement in CMS.
+DONE WHEN: 5 blogs updated with contextual links to priority commercial pages.`,
+        tools: 'CMS',
+        dependency: 'Task 35',
+      },
+      {
+        id: 'tQW-TR1', num: 'QW-TR1', qw: true, training: false, owner: 'CSM',
+        name: 'Update GBP with complete description, categories, and publish a fresh post',
+        execution: `In Google Business Profile (business.google.com):
+· Update description using language from Brand SOT (task 33)
+· Add/confirm primary AND secondary categories
+· Answer all unanswered Q&A questions
+· Publish at least one post (tip, update, or offer)
+· Confirm photos are current and high quality
+
+Note: GBP is a direct entity-resolution input for Google AI Overviews.
+
+DONE WHEN: GBP description updated. Categories confirmed. Post published. Q&A answered.`,
+        tools: 'Google Business Profile',
+        dependency: 'Task 34',
+      },
+      {
+        id: 'tQW-TR2', num: 'QW-TR2', qw: true, training: false, owner: 'CSM',
+        name: 'Respond to all unanswered reviews on Google and active platforms',
+        execution: `Clear the unanswered review queue from task 34.
+Use brand tone from Brand SOT (task 33) — no generic responses.
+For negative: acknowledge concern · offer to resolve · don't be defensive.
+For positive: thank specifically · reinforce a differentiator.
+Route all drafted responses to client for approval BEFORE posting.
+DONE WHEN: Zero unanswered reviews on all active platforms.`,
+        tools: 'GBP · Trustpilot · G2 · Capterra',
+        dependency: 'Task 34',
+      },
+      {
+        id: 'tQW-TR3', num: 'QW-TR3', qw: true, training: false, owner: 'Analyst',
+        name: 'Fix NAP inconsistencies in top 10 priority directories',
+        execution: `From task 38 NAP audit: identify highest-priority mismatches.
+Update top 10 directories. Document each correction:
+Directory | Old Value | New Value | Date Corrected
+Update NAP Audit Google Sheet to mark corrections done.
+DONE WHEN: Top 10 directory listings match GBP exactly. Corrections documented.`,
+        tools: 'Directory profiles · NAP Audit sheet',
+        dependency: 'Task 38',
+      },
+    ]
+  },
+  {
+    id: 'p4', phase: 'PHASE 4', phaseTag: 'tag-p4', phaseLabel: 'Consolidation & Handoff',
+    days: 'Days 25–30', color: '#6b21a8',
+    title: 'Reporting & Action Planning',
+    subtitle: 'Consolidate all findings, build the Month 2 sprint plan, run the internal review, and deliver the output pack.',
+    tasks: [
+      {
+        id: 't39', num: '39', qw: false, training: false, owner: 'Analyst',
+        name: 'Consolidate all findings into one master backlog — score, deduplicate, and prioritise',
+        execution: `BUILD MASTER BACKLOG GOOGLE SHEET:
+Merge all open items from: audit log (23–25) · content review (29–31) · schema inventory (26) · trust audit (34) · linking list (35) · AI benchmarking (36) · competitor review (37) · off-site findings (38)
+
+REMOVE DUPLICATES.
+
+TAG EACH ITEM:
+Category: Technical | Content | Schema | Trust | GEO | Measurement
+
+SCORE EACH ITEM:
+Impact: H / M / L
+Effort: H / M / L (H = heavy, L = light/quick fix)
+Priority = High Impact + Low Effort = highest priority
+Phase: Q-Win (1–30) | Month 2 (31–60) | Month 3 (61–90)
+
+CONTENT GAP TAB (separate tab in same sheet):
+Topic | Content Type (comparison/definition/case study/FAQ hub) | Target Prompt(s) | Priority
+Source from: prompt gaps (17) · competitor content audit (37) · thin page list (31)
+
+DONE WHEN: Master backlog complete. Every item has category + impact + effort + phase.`,
+        tools: 'Google Sheets · Basecamp',
+        dependency: 'All audit tasks (23–38)',
+      },
+      {
+        id: 't40', num: '40', qw: false, training: false, owner: 'CSM + Analyst',
+        name: 'Define Month 2 implementation priorities — build sprint plan in 4 weekly workstreams',
+        execution: `CSM and analyst review prioritised backlog (task 39) together.
+
+BUILD MONTH 2 SPRINT PLAN in Google Docs — 4 weekly workstreams:
+
+WEEK 1 (Days 31–37): Technical fixes + critical schema
+WEEK 2 (Days 38–44): Content rewrites (priority pages)
+WEEK 3 (Days 45–51): New content production (gap pages) + trust additions
+WEEK 4 (Days 52–60): Internal linking + off-site activation + mid-cycle benchmark
+
+For each task in the plan:
+Task | Category | Owner | Effort Estimate | Done-When Criteria
+
+Log Month 2 tasks as Basecamp to-dos with owners and due dates.
+
+POPULATE REPORTING TEMPLATE:
+· Looker Studio with all baseline data from Days 1–14.
+· Confirm tracking owner + update frequency for each KPI.
+· CSM reviews before sharing with client.
+
+DONE WHEN: Month 2 sprint structured into 4 weeks. Reporting template populated.`,
+        tools: 'Google Docs · Google Sheets · Looker Studio · Basecamp',
+        dependency: 'Task 39',
+      },
+      {
+        id: 't41', num: '41', qw: false, training: false, owner: 'CSM',
+        name: 'Internal review of Month 1 outputs with CSM, delivery team, and leadership',
+        execution: `CSM schedules 60-min internal review in Google Meet.
+Attendees: CSM · delivery lead · senior reviewer / leadership.
+
+AGENDA:
+1. Key findings summary (technical · content · schema · trust · GEO readiness · AI benchmarking)
+2. Quick wins delivered in Phase 3 — what was implemented
+3. KPI baselines — all 6 metrics from Looker Studio
+4. Month 2 priorities — walk through sprint plan
+5. Risks and blockers — anything that could delay Month 2
+
+Analyst prepares summary doc or Basecamp message before the call.
+Internal sign-off documented in Basecamp.
+
+DONE WHEN: Internal sign-off received and logged in Basecamp.`,
+        tools: 'Google Meet · Basecamp · Looker Studio',
+        dependency: 'Tasks 39–40',
+      },
+      {
+        id: 't42', num: '42', qw: false, training: false, owner: 'CSM',
+        name: 'Set 60-day expectations and deliver the complete 30-Day Output Pack',
+        execution: `SET EXPECTATIONS (in biweekly client sync):
+'Month 1 = the full audit and foundation phase. From Day 31, implementation begins — this is when GEO visibility improvements compound.'
+
+Do NOT present Month 1 as an implementation phase.
+
+30-DAY OUTPUT PACK (compile in /10_Client_Deliverables):
+Send 48 hrs BEFORE the readout call. All 7 items required:
+
+1. GEO vs SEO Mapping Document
+   Contains: how GEO complements SEO · which signals overlap · what GEO adds that SEO alone cannot
+
+2. Top 10 Quick Wins List — immediately actionable with effort estimates
+
+3. Audit Summary (one doc, all workstreams):
+   Technical · Content gaps · Schema status · Trust gaps · GEO readiness scores · AI benchmarking
+
+4. Month 1 AI Evidence Pack:
+   Prompt set (signed off) · Baseline screenshots by platform · 1-page summary doc
+
+5. Brand Source-of-Truth Document (approved version)
+
+6. KPI Baseline Dashboard link (Looker Studio) — all 6 metrics with Month 1 values
+
+7. Month 2 Implementation Roadmap (sprint plan, 4 weekly workstreams)
+
+READOUT CALL (60 min): Book via Google Meet. Walk through pack. Answer questions.
+
+WRITTEN SIGN-OFF:
+Get written approval on Month 2 roadmap (email sufficient) BEFORE implementation begins.
+
+DONE WHEN: All 7 pack items delivered. Readout call booked. Month 2 roadmap has written sign-off.`,
+        tools: 'Google Meet · Google Drive · Email · Looker Studio',
+        dependency: 'Task 41',
+      },
+    ]
+  },
+];
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let currentUser = null;
+let projects = [];
+let currentProject = null;
+let currentChapterIndex = 0;
+let ctxProjectId = null;
+
+// ═══════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════
+function setAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('login-form').style.display = tab === 'login' ? '' : 'none';
+  document.getElementById('register-form').style.display = tab === 'register' ? '' : 'none';
+  document.querySelectorAll('.auth-tab')[tab === 'login' ? 0 : 1].classList.add('active');
+}
+
+function handleLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-password').value;
+  const users = JSON.parse(localStorage.getItem('geo_users') || '[]');
+  users.push(DEMO_USER);
+  const user = users.find(u => u.email === email && u.password === pass);
+  if (!user) {
+    document.getElementById('login-error').style.display = 'block';
+    return;
+  }
+  document.getElementById('login-error').style.display = 'none';
+  loginUser(user);
+}
+
+function handleRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-password').value;
+  const err = document.getElementById('reg-error');
+  if (!name || !email || !pass) { err.style.display = 'block'; err.textContent = 'All fields required.'; return; }
+  if (pass.length < 6) { err.style.display = 'block'; err.textContent = 'Password must be at least 6 characters.'; return; }
+  const users = JSON.parse(localStorage.getItem('geo_users') || '[]');
+  if (users.find(u => u.email === email)) { err.style.display = 'block'; err.textContent = 'Email already in use.'; return; }
+  users.push({ name, email, password: pass });
+  localStorage.setItem('geo_users', JSON.stringify(users));
+  err.style.display = 'none';
+  loginUser({ name, email, password: pass });
+}
+
+function loginUser(user) {
+  currentUser = user;
+  localStorage.setItem('geo_session', JSON.stringify(user));
+  document.getElementById('topbar-user-initials').textContent = user.name ? user.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) : '?';
+  loadProjects();
+  showScreen('app-screen');
+  goTo('projects');
+}
+
+function handleLogout() {
+  currentUser = null;
+  localStorage.removeItem('geo_session');
+  showScreen('auth-screen');
+}
+
+function tryRestoreSession() {
+  const s = localStorage.getItem('geo_session');
+  if (s) {
+    try { loginUser(JSON.parse(s)); } catch(e) {}
+  }
+}
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// goTo defined below with save-button support
+
+function setBreadcrumb(items) {
+  const bc = document.getElementById('breadcrumb');
+  bc.innerHTML = items.map((item, i) => {
+    const isLast = i === items.length - 1;
+    const sep = i > 0 ? '<span style="opacity:.4;margin:0 4px">›</span>' : '';
+    if (isLast) return `${sep}<span>${item.label}</span>`;
+    if (item.click) return `${sep}<span style="cursor:pointer;color:var(--ink3)" onclick="${item.click}">${item.label}</span>`;
+    return `${sep}${item.label}`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// PROJECTS
+// ═══════════════════════════════════════
+function loadProjects() {
+  const key = `geo_projects_${currentUser.email}`;
+  projects = JSON.parse(localStorage.getItem(key) || '[]');
+}
+
+function saveProjects() {
+  const key = `geo_projects_${currentUser.email}`;
+  localStorage.setItem(key, JSON.stringify(projects));
+}
+
+function renderProjects() {
+  const grid = document.getElementById('projects-grid');
+  if (!projects.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-icon">📋</div>
+      <div class="empty-title">No clients yet</div>
+      <div class="empty-desc">Create your first GEO client workspace to get started.</div>
+    </div>`;
+    return;
+  }
+  const emojis = ['🚀','🎯','⚡','🔥','💡','🌐','📈','🛠️','🎪','🌟'];
+  grid.innerHTML = projects.map((p, i) => {
+    const date = new Date(p.created).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+    const progress = getProjectProgress(p);
+    return `<div class="project-card" onclick="goTo('selector', '${p.id}')">
+      <div class="project-card-header">
+        <div class="project-icon">${emojis[i % emojis.length]}</div>
+        <button class="project-menu-btn" onclick="openCtxMenu(event, '${p.id}')">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="4" r="1.2"/><circle cx="8" cy="8" r="1.2"/><circle cx="8" cy="12" r="1.2"/></svg>
+        </button>
+      </div>
+      <div class="project-name">${p.name}</div>
+      <div class="project-meta">Created ${date}</div>
+      ${progress.total > 0 ? `<div style="margin-top:12px">
+        <div style="height:3px;background:var(--paper3);border-radius:2px;overflow:hidden">
+          <div style="height:100%;width:${Math.round(progress.done/progress.total*100)}%;background:var(--green);border-radius:2px;transition:width .4s"></div>
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);margin-top:5px">${progress.done}/${progress.total} tasks complete</div>
+      </div>` : ''}
+      <div class="project-plans">
+        <span class="plan-badge active">30 days</span>
+        <span class="plan-badge locked">60 days</span>
+        <span class="plan-badge locked">90 days</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function getProjectProgress(p) {
+  const key = `geo_tasks_${currentUser.email}_${p.id}`;
+  const checks = JSON.parse(localStorage.getItem(key) || '{}');
+  let total = 0, done = 0;
+  PLAN_30_DATA.forEach(ch => ch.tasks.forEach(t => {
+    total++;
+    if (checks[t.id]) done++;
+  }));
+  return { total, done };
+}
+
+function openNewProjectModal() {
+  document.getElementById('new-project-name').value = '';
+  document.getElementById('new-project-modal').classList.add('open');
+  setTimeout(() => document.getElementById('new-project-name').focus(), 50);
+}
+
+function createProject() {
+  const name = document.getElementById('new-project-name').value.trim();
+  if (!name) return;
+  const p = { id: 'p_' + Date.now(), name, created: Date.now() };
+  projects.unshift(p);
+  saveProjects();
+  closeModal('new-project-modal');
+  renderProjects();
+}
+
+// Context menu
+function openCtxMenu(e, projectId) {
+  e.stopPropagation();
+  ctxProjectId = projectId;
+  const menu = document.getElementById('ctx-menu');
+  menu.style.left = e.clientX + 'px';
+  menu.style.top = e.clientY + 'px';
+  menu.classList.add('open');
+}
+
+function ctxAction(action) {
+  document.getElementById('ctx-menu').classList.remove('open');
+  const p = projects.find(pr => pr.id === ctxProjectId);
+  if (!p) return;
+  if (action === 'rename') {
+    document.getElementById('rename-input').value = p.name;
+    document.getElementById('rename-modal').classList.add('open');
+    setTimeout(() => document.getElementById('rename-input').select(), 50);
+  } else if (action === 'delete') {
+    document.getElementById('delete-project-name').textContent = p.name;
+    document.getElementById('delete-modal').classList.add('open');
+  }
+}
+
+function confirmRename() {
+  const name = document.getElementById('rename-input').value.trim();
+  if (!name) return;
+  const p = projects.find(pr => pr.id === ctxProjectId);
+  if (p) { p.name = name; saveProjects(); renderProjects(); }
+  closeModal('rename-modal');
+}
+
+function confirmDelete() {
+  projects = projects.filter(p => p.id !== ctxProjectId);
+  saveProjects();
+  closeModal('delete-modal');
+  renderProjects();
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+document.getElementById('ctx-menu').addEventListener('click', e => e.stopPropagation());
+document.addEventListener('click', () => document.getElementById('ctx-menu').classList.remove('open'));
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+}));
+
+// Enter key in new project modal
+document.getElementById('new-project-name').addEventListener('keydown', e => { if (e.key === 'Enter') createProject(); });
+document.getElementById('rename-input').addEventListener('keydown', e => { if (e.key === 'Enter') confirmRename(); });
+
+// ═══════════════════════════════════════
+// PLAN SELECTION
+// ═══════════════════════════════════════
+function openPlan(days) {
+  if (days !== 30) return;
+  goTo('plan');
+}
+
+// ═══════════════════════════════════════
+// TASK STORAGE
+// ═══════════════════════════════════════
+function getTaskKey() {
+  return `geo_tasks_${currentUser.email}_${currentProject.id}`;
+}
+function getChecks() {
+  return JSON.parse(localStorage.getItem(getTaskKey()) || '{}');
+}
+function setCheck(taskId, val) {
+  const c = getChecks();
+  c[taskId] = val;
+  localStorage.setItem(getTaskKey(), JSON.stringify(c));
+}
+function getNoteKey(taskId) {
+  return `geo_note_${currentUser.email}_${currentProject.id}_${taskId}`;
+}
+function getNote(taskId) { return localStorage.getItem(getNoteKey(taskId)) || ''; }
+function setNote(taskId, val) { localStorage.setItem(getNoteKey(taskId), val); }
+function getLinkKey(taskId, type) {
+  return `geo_link_${currentUser.email}_${currentProject.id}_${taskId}_${type}`;
+}
+function getLink(taskId, type) { return localStorage.getItem(getLinkKey(taskId, type)) || ''; }
+function setLink(taskId, type, val) { localStorage.setItem(getLinkKey(taskId, type), val); }
+function handleLinkInput(taskId, type, val) {
+  setLink(taskId, type, val);
+  const row = document.getElementById(`link-row-${type}-${taskId}`);
+  const anchor = document.getElementById(`link-open-${type}-${taskId}`);
+  if (val.trim()) {
+    row.classList.add('has-value');
+    anchor.href = val.startsWith('http') ? val : 'https://' + val;
+  } else {
+    row.classList.remove('has-value');
+    anchor.href = '#';
+  }
+}
+
+// ═══════════════════════════════════════
+// PLAN RENDER
+// ═══════════════════════════════════════
+function renderPlanSidebar() {
+  const nav = document.getElementById('sidebar-nav');
+  const checks = getChecks();
+  let lastPhase = '';
+  let html = '';
+  const phaseColors = { 'PHASE 1': '#3b82f6', 'PHASE 2': '#22c55e', 'PHASE 3': '#f59e0b', 'PHASE 4': '#a855f7' };
+
+  PLAN_30_DATA.forEach((ch, i) => {
+    if (ch.phase !== lastPhase) {
+      const done = PLAN_30_DATA.filter(c => c.phase === ch.phase).reduce((acc, c) => acc + c.tasks.filter(t => checks[t.id]).length, 0);
+      const total = PLAN_30_DATA.filter(c => c.phase === ch.phase).reduce((acc, c) => acc + c.tasks.length, 0);
+      const pct = total > 0 ? Math.round(done / total * 100) : 0;
+      html += `<div class="nav-phase-label">${ch.phase} · ${ch.phaseLabel}</div>
+        <div class="nav-progress"><div class="nav-progress-bar" style="width:${pct}%"></div></div>`;
+      lastPhase = ch.phase;
+    }
+    const done = ch.tasks.filter(t => checks[t.id]).length;
+    const pct = Math.round(done / ch.tasks.length * 100);
+    const color = phaseColors[ch.phase] || '#888';
+    html += `<div class="nav-item ${currentChapterIndex === i ? 'active' : ''}" onclick="renderChapter(${i})">
+      <div class="nav-item-dot" style="background:${color}"></div>
+      <span>${ch.title}</span>
+      ${done > 0 ? `<span style="margin-left:auto;font-family:'DM Mono',monospace;font-size:9px;color:var(--ink3)">${pct}%</span>` : ''}
+    </div>`;
+  });
+  nav.innerHTML = html;
+}
+
+// ═══════════════════════════════════════
+// PROJECT OVERRIDES  (per-project edits, separate from base template)
+// ═══════════════════════════════════════
+function getOverrideKey() {
+  return `geo_overrides_${currentUser.email}_${currentProject.id}`;
+}
+function getAllOverrides() {
+  return JSON.parse(localStorage.getItem(getOverrideKey()) || '{}');
+}
+function getOverride(taskId) {
+  return getAllOverrides()[taskId] || {};
+}
+
+// Pending edits accumulate here until Save is clicked
+let pendingEdits = {};
+let isDirty = false;
+
+function markDirty(taskId, field, value) {
+  if (!pendingEdits[taskId]) pendingEdits[taskId] = {};
+  pendingEdits[taskId][field] = value;
+  isDirty = true;
+  const btn = document.getElementById('save-btn');
+  if (btn) { btn.classList.add('visible', 'dirty'); }
+  // Show modified badge on task header
+  const badge = document.getElementById('badge-' + taskId);
+  if (badge) badge.classList.add('visible');
+}
+
+function saveAllEdits() {
+  const overrides = getAllOverrides();
+  for (const taskId in pendingEdits) {
+    if (!overrides[taskId]) overrides[taskId] = {};
+    Object.assign(overrides[taskId], pendingEdits[taskId]);
+  }
+  localStorage.setItem(getOverrideKey(), JSON.stringify(overrides));
+  pendingEdits = {};
+  isDirty = false;
+  const btn = document.getElementById('save-btn');
+  if (btn) btn.classList.remove('dirty');
+  showToast();
+}
+
+function showToast() {
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+function resetPendingEdits() {
+  pendingEdits = {};
+  isDirty = false;
+  const btn = document.getElementById('save-btn');
+  if (btn) { btn.classList.remove('dirty'); }
+}
+
+// ═══════════════════════════════════════
+// PLAN RENDER
+// ═══════════════════════════════════════
+function renderChapter(idx) {
+  // Warn if dirty
+  if (isDirty) {
+    if (!confirm('You have unsaved changes. Leave without saving?')) return;
+    resetPendingEdits();
+  }
+
+  currentChapterIndex = idx;
+  const ch = PLAN_30_DATA[idx];
+  const checks = getChecks();
+  const content = document.getElementById('plan-content');
+
+  const done = ch.tasks.filter(t => checks[t.id]).length;
+  const pct = Math.round(done / ch.tasks.length * 100);
+
+  const tasksHTML = ch.tasks.map(t => {
+    const isChecked = checks[t.id] ? 'checked' : '';
+    const note = getNote(t.id);
+    const todoLink = getLink(t.id, 'todo');
+    const driveLink = getLink(t.id, 'drive');
+
+    // Load override or fall back to base template
+    const ov = getOverride(t.id);
+    const execText = ov.execution !== undefined ? ov.execution : t.execution;
+    const toolsText = ov.tools !== undefined ? ov.tools : t.tools;
+
+    const tags = [];
+    if (t.qw) tags.push('<span class="task-tag qw">⚡ Quick Win</span>');
+    if (t.training) tags.push('<span class="task-tag training">📚 Training needed</span>');
+    if (t.owner) tags.push(`<span class="task-tag owner">👤 ${t.owner}</span>`);
+    const hasOverride = ov.execution !== undefined || ov.tools !== undefined;
+
+    // Convert plain text execution to safe HTML for contenteditable
+    const execHTML = textToEditorHTML(execText);
+
+    return `<div class="task-item" id="task-${t.id}">
+      <div class="task-header" onclick="toggleTask('${t.id}')">
+        <div class="task-check-wrap" onclick="event.stopPropagation()">
+          <input type="checkbox" class="task-check" id="check-${t.id}" ${isChecked}
+            onchange="handleCheck('${t.id}', this.checked)">
+        </div>
+        <div class="task-main">
+          <div class="task-num">Task ${t.num}${hasOverride ? `<span class="task-modified-badge visible" id="badge-${t.id}">edited</span>` : `<span class="task-modified-badge" id="badge-${t.id}">edited</span>`}</div>
+          <div class="task-name">${t.name}</div>
+          ${tags.length ? `<div class="task-meta-row">${tags.join('')}</div>` : ''}
+        </div>
+        <button class="task-toggle" onclick="event.stopPropagation();toggleTask('${t.id}')">
+          <svg viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="task-body">
+        <div class="task-section">
+          <div class="task-section-label">How to Execute</div>
+          <div class="exec-editor-wrap">
+            <div class="exec-toolbar" onmousedown="event.preventDefault()">
+              <button class="exec-toolbar-btn" title="Bold" onclick="execCmd('bold')"><strong>B</strong></button>
+              <button class="exec-toolbar-btn" title="Italic" onclick="execCmd('italic')"><em>I</em></button>
+              <button class="exec-toolbar-btn" title="Underline" onclick="execCmd('underline')"><u>U</u></button>
+              <div class="exec-toolbar-sep"></div>
+              <button class="exec-toolbar-btn" title="Bullet list" onclick="execCmd('insertUnorderedList')">
+                <svg viewBox="0 0 16 16" fill="none"><circle cx="3" cy="5" r="1.2" fill="currentColor"/><circle cx="3" cy="9" r="1.2" fill="currentColor"/><circle cx="3" cy="13" r="1.2" fill="currentColor"/><path d="M6 5h8M6 9h8M6 13h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              </button>
+              <button class="exec-toolbar-btn" title="Numbered list" onclick="execCmd('insertOrderedList')">
+                <svg viewBox="0 0 16 16" fill="none"><path d="M3 4v3M3 4h1M3 7h1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M3 10h1.5l-1.5 2H5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 5h7M7 9h7M7 13h7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              </button>
+              <div class="exec-toolbar-sep"></div>
+              <button class="exec-toolbar-btn" title="Undo" onclick="execCmd('undo')">
+                <svg viewBox="0 0 16 16" fill="none"><path d="M2 6h6a4 4 0 010 8H4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 6l3-3M2 6l3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button class="exec-toolbar-btn" title="Redo" onclick="execCmd('redo')">
+                <svg viewBox="0 0 16 16" fill="none"><path d="M14 6H8a4 4 0 000 8h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 6l-3-3M14 6l-3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <div class="exec-toolbar-sep"></div>
+              <button class="exec-toolbar-btn" title="Clear formatting" onclick="execCmd('removeFormat')" style="font-size:10px;letter-spacing:-.5px">Tx</button>
+            </div>
+            <div class="exec-editor"
+              contenteditable="true"
+              id="exec-${t.id}"
+              data-taskid="${t.id}"
+              oninput="handleExecInput('${t.id}')"
+              spellcheck="false">${execHTML}</div>
+          </div>
+        </div>
+        <div class="task-info-grid">
+          <div class="task-info-item editable" title="Click to edit tools">
+            <div class="task-info-label">Tools</div>
+            <textarea class="tools-editable" id="tools-${t.id}"
+              placeholder="Tools used…"
+              oninput="handleToolsInput('${t.id}', this.value)"
+              rows="1"
+              onfocus="autoResize(this)"
+              oninput="autoResize(this); handleToolsInput('${t.id}', this.value)">${toolsText}</textarea>
+          </div>
+          <div class="task-info-item">
+            <div class="task-info-label">Dependency</div>
+            <div class="task-info-val">${t.dependency}</div>
+          </div>
+        </div>
+        <div class="task-section" style="margin-top:14px">
+          <div class="task-section-label">Links</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="task-link-row${todoLink ? ' has-value' : ''}" id="link-row-todo-${t.id}">
+              <div class="task-link-icon">
+                <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5 8h6M5 5.5h6M5 10.5h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              </div>
+              <input class="task-link-input" type="url" placeholder="To-do / task link (Asana, Basecamp, Notion…)"
+                value="${todoLink}"
+                oninput="handleLinkInput('${t.id}', 'todo', this.value)">
+              <a id="link-open-todo-${t.id}" class="task-link-open" href="${todoLink || '#'}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+                <svg viewBox="0 0 16 16" fill="none"><path d="M4 12L12 4M7 4h5v5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+            </div>
+            <div class="task-link-row${driveLink ? ' has-value' : ''}" id="link-row-drive-${t.id}">
+              <div class="task-link-icon" style="color:#1a73e8">
+                <svg viewBox="0 0 16 16" fill="none"><path d="M8 2L2 12h4l2-4 2 4h4L8 2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M2 12h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              </div>
+              <input class="task-link-input" type="url" placeholder="Google Drive link (doc, sheet, folder…)"
+                value="${driveLink}"
+                oninput="handleLinkInput('${t.id}', 'drive', this.value)">
+              <a id="link-open-drive-${t.id}" class="task-link-open" href="${driveLink || '#'}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+                <svg viewBox="0 0 16 16" fill="none"><path d="M4 12L12 4M7 4h5v5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="task-section" style="margin-top:14px">
+          <div class="task-section-label">Notes / Owner updates</div>
+          <textarea class="task-notes-area" placeholder="Add notes, blockers, or updates…"
+            oninput="saveNote('${t.id}', this.value)">${note}</textarea>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  content.innerHTML = `<div class="chapter active">
+    <div class="chapter-eyebrow">
+      <span class="chapter-phase-tag ${ch.phaseTag}">${ch.phase} · ${ch.phaseLabel}</span>
+      <span class="chapter-day">${ch.days}</span>
+    </div>
+    <div class="chapter-title">${ch.title}</div>
+    <div class="chapter-subtitle">${ch.subtitle}</div>
+    <div class="chapter-progress">
+      <div class="chapter-progress-bar-wrap">
+        <div class="chapter-progress-bar" style="width:${pct}%"></div>
+      </div>
+      <div class="chapter-progress-text">${done}/${ch.tasks.length} tasks · ${pct}%</div>
+    </div>
+    <div class="tasks-list">${tasksHTML}</div>
+    <div class="chapter-nav-row">
+      <button class="chapter-nav-btn" onclick="renderChapter(${idx - 1})" ${idx === 0 ? 'disabled' : ''}>
+        <svg viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Previous
+      </button>
+      <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--ink3)">${idx + 1} / ${PLAN_30_DATA.length}</span>
+      <button class="chapter-nav-btn" onclick="renderChapter(${idx + 1})" ${idx === PLAN_30_DATA.length - 1 ? 'disabled' : ''}>
+        Next
+        <svg viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>`;
+
+  content.scrollTop = 0;
+  renderPlanSidebar();
+
+  // Auto-resize all tools textareas on render
+  document.querySelectorAll('.tools-editable').forEach(ta => autoResize(ta));
+}
+
+// ═══════════════════════════════════════
+// EDITOR HELPERS
+// ═══════════════════════════════════════
+
+// Convert plain text (with section headers like "HEADER:") to editor HTML
+function textToEditorHTML(text) {
+  if (!text) return '';
+  // Escape HTML
+  const escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  // Convert lines to divs so contenteditable behaves consistently
+  return escaped.split('\n').map(line => {
+    if (!line.trim()) return '<div><br></div>';
+    return `<div>${line}</div>`;
+  }).join('');
+}
+
+// Extract plain text from contenteditable div
+function editorHTMLToText(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  // Get innerText preserving line breaks
+  const lines = [];
+  function walk(node) {
+    if (node.nodeType === 3) {
+      lines[lines.length - 1] = (lines[lines.length - 1] || '') + node.textContent;
+    } else if (node.tagName === 'BR') {
+      lines.push('');
+    } else if (['DIV','P','LI'].includes(node.tagName)) {
+      if (lines.length > 0 && lines[lines.length - 1] !== undefined) lines.push('');
+      node.childNodes.forEach(walk);
+    } else if (node.tagName === 'UL' || node.tagName === 'OL') {
+      node.childNodes.forEach(walk);
+    } else {
+      node.childNodes.forEach(walk);
+    }
+  }
+  lines.push('');
+  tmp.childNodes.forEach(walk);
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+function execCmd(cmd) {
+  document.execCommand(cmd, false, null);
+}
+
+function handleExecInput(taskId) {
+  const el = document.getElementById('exec-' + taskId);
+  if (!el) return;
+  const plain = editorHTMLToText(el.innerHTML);
+  markDirty(taskId, 'execution', plain);
+}
+
+function handleToolsInput(taskId, val) {
+  markDirty(taskId, 'tools', val);
+}
+
+function autoResize(ta) {
+  ta.style.height = 'auto';
+  ta.style.height = ta.scrollHeight + 'px';
+}
+
+function formatExecution(text) {
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/^([A-Z][A-Z &\/]+):$/gm, '<strong>$1:</strong>')
+    .replace(/⚠/g, '<span style="color:var(--amber)">⚠</span>')
+    .replace(/DONE WHEN:(.*?)$/gm, '<strong style="color:var(--green)">DONE WHEN:$1</strong>');
+}
+
+function toggleTask(taskId) {
+  const item = document.getElementById('task-' + taskId);
+  item.classList.toggle('expanded');
+  // Auto-resize tools textarea when expanding
+  if (item.classList.contains('expanded')) {
+    const ta = document.getElementById('tools-' + taskId);
+    if (ta) autoResize(ta);
+  }
+}
+
+function handleCheck(taskId, checked) {
+  setCheck(taskId, checked);
+  const ch = PLAN_30_DATA[currentChapterIndex];
+  const checks = getChecks();
+  const done = ch.tasks.filter(t => checks[t.id]).length;
+  const pct = Math.round(done / ch.tasks.length * 100);
+  const bar = document.querySelector('.chapter-progress-bar');
+  const text = document.querySelector('.chapter-progress-text');
+  if (bar) bar.style.width = pct + '%';
+  if (text) text.textContent = `${done}/${ch.tasks.length} tasks · ${pct}%`;
+  renderPlanSidebar();
+}
+
+function saveNote(taskId, val) {
+  setNote(taskId, val);
+}
+
+// Hide save button when not in plan view
+function goTo(view, projectId) {
+  document.querySelectorAll('#projects-view, #plan-selector-view, #plan-view').forEach(v => v.classList.remove('active'));
+  const saveBtn = document.getElementById('save-btn');
+  if (view === 'projects') {
+    document.getElementById('projects-view').classList.add('active');
+    setBreadcrumb([{ label: 'Clients' }]);
+    if (saveBtn) saveBtn.classList.remove('visible', 'dirty');
+    resetPendingEdits();
+    renderProjects();
+  } else if (view === 'selector') {
+    currentProject = projects.find(p => p.id === projectId);
+    document.getElementById('selector-project-name').textContent = currentProject.name;
+    document.getElementById('plan-selector-view').classList.add('active');
+    setBreadcrumb([{ label: 'Clients', click: "goTo('projects')" }, { label: currentProject.name }]);
+    if (saveBtn) saveBtn.classList.remove('visible', 'dirty');
+    resetPendingEdits();
+  } else if (view === 'plan') {
+    document.getElementById('sidebar-project-name').textContent = currentProject.name;
+    document.getElementById('plan-view').classList.add('active');
+    setBreadcrumb([
+      { label: 'Clients', click: "goTo('projects')" },
+      { label: currentProject.name, click: `goTo('selector', '${currentProject.id}')` },
+      { label: '30-Day Plan' }
+    ]);
+    if (saveBtn) saveBtn.classList.add('visible');
+    renderPlanSidebar();
+    renderChapter(0);
+  }
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+tryRestoreSession();
+</script>
+</body>
+</html>
