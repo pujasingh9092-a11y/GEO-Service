@@ -380,6 +380,28 @@ select:focus,
   color: var(--ink);
 }
 
+.client-admin-picker {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+  margin-bottom: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 12px;
+}
+
+.client-admin-picker.empty {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.client-admin-picker .field {
+  margin-bottom: 0;
+}
+
 .people-rows {
   display: grid;
   gap: 10px;
@@ -1587,6 +1609,10 @@ select:focus,
   .person-row {
     grid-template-columns: 1fr;
   }
+
+  .client-admin-picker {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* GO MO Group dark skin. Structure/function stays unchanged. */
@@ -2159,6 +2185,11 @@ h3,
 
 :root[data-theme="light"] .assigned-person-card span {
   color: #030a9e;
+}
+
+:root[data-theme="light"] .client-admin-picker {
+  border-color: var(--line);
+  background: #f7faff;
 }
 
 :root[data-theme="light"] .topbar {

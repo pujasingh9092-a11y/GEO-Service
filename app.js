@@ -911,6 +911,7 @@
               <strong>People & roles</strong>
               <button class="secondary-btn compact" type="button" data-action="add-person-row">Add person</button>
             </div>
+            ${adminPeoplePickerHtml(people)}
             <div class="people-rows" data-people-rows>
               ${people.length ? people.map(personRowHtml).join("") : personRowHtml()}
             </div>
@@ -927,6 +928,36 @@
     modalRoot.querySelector("[data-action='close-modal']").addEventListener("click", closeModal);
     modalRoot.querySelector("[data-action='add-person-row']").addEventListener("click", () => {
       modalRoot.querySelector("[data-people-rows]").insertAdjacentHTML("beforeend", personRowHtml());
+    });
+    modalRoot.querySelector("[data-action='add-admin-person-to-client']")?.addEventListener("click", () => {
+      const select = modalRoot.querySelector("[data-admin-person-picker]");
+      const person = ensureGlobalPeople().find((item) => item.id === select?.value);
+      if (!person) return;
+      const rows = modalRoot.querySelector("[data-people-rows]");
+      const existingKeys = new Set(
+        Array.from(rows.querySelectorAll("[data-person-row]")).map((row) => {
+          const email = row.querySelector("[data-person-field='email']").value.trim();
+          const name = row.querySelector("[data-person-field='name']").value.trim();
+          return (email || name).toLowerCase();
+        }).filter(Boolean)
+      );
+      const key = personKey(person) || person.name.toLowerCase();
+      if (existingKeys.has(key)) {
+        showToast("Person already added to this client");
+        return;
+      }
+      const blankRow = Array.from(rows.querySelectorAll("[data-person-row]")).find((row) => {
+        const name = row.querySelector("[data-person-field='name']").value.trim();
+        const email = row.querySelector("[data-person-field='email']").value.trim();
+        return !name && !email;
+      });
+      if (blankRow && rows.querySelectorAll("[data-person-row]").length === 1) {
+        blankRow.outerHTML = personRowHtml(person);
+      } else {
+        rows.insertAdjacentHTML("beforeend", personRowHtml(person));
+      }
+      select.value = "";
+      showToast("Person added to client");
     });
     bindPersonRowRemoval(modalRoot);
     modalRoot.querySelector("[data-project-form]").addEventListener("submit", (event) => {
@@ -997,6 +1028,35 @@
         if (removedIds.has(personId)) task.owner = "";
       });
     });
+  }
+
+  function adminPeoplePickerHtml(projectPeople = []) {
+    const adminPeople = ensureGlobalPeople();
+    if (!adminPeople.length) {
+      return `
+        <div class="client-admin-picker empty">
+          <span>No Adminland people yet. Add a person below or create them in Adminland first.</span>
+        </div>
+      `;
+    }
+
+    const projectKeys = new Set(projectPeople.map((person) => personKey(person) || person.name.toLowerCase()).filter(Boolean));
+    return `
+      <div class="client-admin-picker">
+        <label class="field">
+          <span>Add from Adminland</span>
+          <select data-admin-person-picker>
+            <option value="">Select a person</option>
+            ${adminPeople.map((person) => {
+              const key = personKey(person) || person.name.toLowerCase();
+              const alreadyAdded = projectKeys.has(key);
+              return `<option value="${escapeHtml(person.id)}" ${alreadyAdded ? "disabled" : ""}>${escapeHtml(person.name || person.email)} (${escapeHtml(person.role)})${alreadyAdded ? " · already added" : ""}</option>`;
+            }).join("")}
+          </select>
+        </label>
+        <button class="secondary-btn compact" type="button" data-action="add-admin-person-to-client">Add to client</button>
+      </div>
+    `;
   }
 
   function personRowHtml(person = {}, options = {}) {
