@@ -2392,6 +2392,7 @@ h3,
 }
 
 :root[data-theme="light"] .link-row.locked-link {
+  border-color: transparent;
   background: transparent;
 }
 
