@@ -197,6 +197,13 @@
     return `phase-${index + 1}`;
   }
 
+  function phaseDisplayTitle(phase) {
+    const title = String(phase?.title || "");
+    const weekMatch = title.match(/^W(\d+)$/i);
+    if (weekMatch) return `Phase ${weekMatch[1]}`;
+    return title.replace("PHASE ", "Phase ");
+  }
+
   function render() {
     if (!state.user) {
       renderAuth();
@@ -487,8 +494,8 @@
       <main class="plan-shell">
         <aside class="chapter-sidebar">
           <div class="chapter-sidebar-head">
-            <strong>${escapeHtml(project.name)}</strong>
-            <span>${escapeHtml(planLabelFor(type))}</span>
+          <strong>${escapeHtml(project.name)}</strong>
+          <span>${escapeHtml(planLabelFor(type))}</span>
             <button class="back-btn compact" data-action="go-selector">Plans</button>
           </div>
           <nav class="chapter-nav">
@@ -509,7 +516,7 @@
       <button class="chapter-nav-item ${active}" data-action="open-chapter" data-chapter-index="${index}">
         <span class="phase-dot ${phaseClass(index)}"></span>
         <span>
-          <strong>${escapeHtml(phase.title.replace("PHASE ", "Phase "))}</strong>
+          <strong>${escapeHtml(phaseDisplayTitle(phase))}</strong>
           <small>${escapeHtml(phase.name)} · ${progress.pct}%</small>
         </span>
       </button>
@@ -521,7 +528,7 @@
     return `
       <article class="chapter">
         <div class="chapter-kicker">
-          <span class="chapter-pill ${phaseClass(phaseIndex)}">${escapeHtml(phase.title)} · ${escapeHtml(phase.name)}</span>
+          <span class="chapter-pill ${phaseClass(phaseIndex)}">${escapeHtml(phaseDisplayTitle(phase))} · ${escapeHtml(phase.name)}</span>
         </div>
         <div class="chapter-title-row">
           <div>
