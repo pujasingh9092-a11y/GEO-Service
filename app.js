@@ -28,6 +28,7 @@
       activeProjectId: null,
       view: "projects",
       activeChapterIndex: 0,
+      activePlanType: "30",
       theme: "dark",
     };
 
@@ -60,19 +61,19 @@
   }
 
   function hasDirtyTasks() {
-    return state.projects.some((project) =>
-      project.plan.phases.some((phase) => phase.tasks.some((task) => task.dirty))
-    );
+    return state.projects.some((project) => projectPlans(project).some((plan) =>
+      plan.phases.some((phase) => phase.tasks.some((task) => task.dirty))
+    ));
   }
 
   function cleanAllTaskDrafts() {
     state.projects.forEach((project) => {
-      project.plan.phases.forEach((phase) => {
+      projectPlans(project).forEach((plan) => plan.phases.forEach((phase) => {
         phase.tasks.forEach((task) => {
           task.dirty = false;
           task.editingFields = {};
         });
-      });
+      }));
     });
   }
 
@@ -149,8 +150,40 @@
     return String(person.email || person.id || "").trim().toLowerCase();
   }
 
-  function allTasks(project) {
-    return project.plan.phases.flatMap((phase) => phase.tasks);
+  function planLabelFor(type) {
+    return `${type}-Day Plan`;
+  }
+
+  function ensureProjectPlans(project) {
+    const hadPlanCopies = Boolean(project.planCopies);
+    if (!project.planCopies) project.planCopies = {};
+    if (!hadPlanCopies && project.plan && !project.planCopies[project.planType || "30"]) {
+      project.planCopies[project.planType || "30"] = project.plan;
+    }
+    if (!project.planCopies["30"]) project.planCopies["30"] = clone(template.plans["30"]);
+    return project.planCopies;
+  }
+
+  function projectPlans(project) {
+    return Object.values(ensureProjectPlans(project));
+  }
+
+  function activePlanType(project = activeProject()) {
+    const requested = state.activePlanType || project?.activePlanType || project?.planType || "30";
+    if (template.plans[requested] && !template.plans[requested].disabled) return requested;
+    return "30";
+  }
+
+  function projectPlan(project, type = activePlanType(project)) {
+    const planCopies = ensureProjectPlans(project);
+    if (!planCopies[type] && template.plans[type] && !template.plans[type].disabled) {
+      planCopies[type] = clone(template.plans[type]);
+    }
+    return planCopies[type] || planCopies["30"];
+  }
+
+  function allTasks(project, type = "30") {
+    return projectPlan(project, type).phases.flatMap((phase) => phase.tasks);
   }
 
   function progressForTasks(tasks) {
@@ -313,7 +346,7 @@
         </div>
         <div class="badge-row">
           <span class="badge active">30 days</span>
-          <span class="badge locked">60 locked</span>
+          <span class="badge active">60 days</span>
           <span class="badge locked">90 locked</span>
         </div>
       </article>
@@ -416,22 +449,21 @@
           <div>
             <span class="eyebrow">Choose plan</span>
             <h1>${escapeHtml(project.name)}</h1>
-            <p>Select the client plan you want to work on. The 60 and 90 day plans are intentionally locked for now.</p>
+            <p>Select the client plan you want to work on. The 90 day plan is intentionally locked for now.</p>
           </div>
         </section>
         <section class="plan-cards">
-          <button class="plan-card live" data-action="open-plan">
+          <button class="plan-card live" data-action="open-plan" data-plan-type="30">
             <span class="plan-num">30</span>
             <span class="plan-label">Day plan</span>
             <strong>Foundation & Audit</strong>
             <p>Full GEO audit, baseline measurement, quick wins, and client handoff.</p>
           </button>
-          <button class="plan-card" disabled>
-            <em>Coming soon</em>
+          <button class="plan-card live" data-action="open-plan" data-plan-type="60">
             <span class="plan-num">60</span>
             <span class="plan-label">Day plan</span>
             <strong>Implementation</strong>
-            <p>Content rewrites, schema deployment, trust building, and off-site activation.</p>
+            <p>Days 31–60 implementation, content architecture, schema, social, authority, and reporting.</p>
           </button>
           <button class="plan-card" disabled>
             <em>Coming soon</em>
@@ -448,20 +480,23 @@
   function planView() {
     const project = activeProject();
     if (!project) return projectsView();
-    const phase = project.plan.phases[state.activeChapterIndex] || project.plan.phases[0];
+    const type = activePlanType(project);
+    const plan = projectPlan(project, type);
+    const phase = plan.phases[state.activeChapterIndex] || plan.phases[0];
     return `
       <main class="plan-shell">
         <aside class="chapter-sidebar">
           <div class="chapter-sidebar-head">
             <strong>${escapeHtml(project.name)}</strong>
-            <span>30-Day Plan</span>
+            <span>${escapeHtml(planLabelFor(type))}</span>
+            <button class="back-btn compact" data-action="go-selector">Plans</button>
           </div>
           <nav class="chapter-nav">
-            ${project.plan.phases.map((item, index) => chapterNavItem(project, item, index)).join("")}
+            ${plan.phases.map((item, index) => chapterNavItem(project, item, index)).join("")}
           </nav>
         </aside>
         <section class="chapter-content">
-          ${chapterHtml(project, phase, state.activeChapterIndex)}
+          ${chapterHtml(project, plan, phase, state.activeChapterIndex)}
         </section>
       </main>
     `;
@@ -481,7 +516,7 @@
     `;
   }
 
-  function chapterHtml(project, phase, phaseIndex) {
+  function chapterHtml(project, plan, phase, phaseIndex) {
     const progress = progressForTasks(phase.tasks);
     return `
       <article class="chapter">
@@ -491,7 +526,7 @@
         <div class="chapter-title-row">
           <div>
             <h1>${escapeHtml(phase.name)}</h1>
-            <p>${escapeHtml(project.planLabel)} chapter with editable execution guidance, tools, links, and owner/status tracking.</p>
+            <p>${escapeHtml(planLabelFor(activePlanType(project)))} chapter with editable execution guidance, tools, links, and owner/status tracking.</p>
           </div>
           <div class="chapter-score">
             <strong>${progress.pct}%</strong>
@@ -504,7 +539,7 @@
         </div>
         <div class="chapter-footer">
           <button class="secondary-btn" data-action="prev-chapter" ${phaseIndex === 0 ? "disabled" : ""}>Previous chapter</button>
-          <button class="secondary-btn" data-action="next-chapter" ${phaseIndex === project.plan.phases.length - 1 ? "disabled" : ""}>Next chapter</button>
+          <button class="secondary-btn" data-action="next-chapter" ${phaseIndex === plan.phases.length - 1 ? "disabled" : ""}>Next chapter</button>
         </div>
       </article>
     `;
@@ -532,7 +567,7 @@
               <span class="status-tag status-${statusSlug(task.status)}">${escapeHtml(task.status || "To Do")}</span>
               <span class="category-tag">${escapeHtml(task.category)}</span>
               <span class="owner-tag">${escapeHtml(ownerDisplayName(task.owner))}</span>
-              ${task.trainingRequired === "Yes — Bing WMT AI report setup" || task.trainingRequired === "Yes — prompt-building guide/recording needed" || task.trainingRequired === "Yes — step-by-step recording needed" ? `<span class="training">Training</span>` : ""}
+              ${String(task.trainingRequired || "").startsWith("Yes") ? `<span class="training">Training</span>` : ""}
               ${task.quickWin === "Yes" ? `<span class="quick">Quick win</span>` : ""}
             </div>
           </div>
@@ -794,8 +829,18 @@
     }
 
     if (action === "open-plan") {
+      const project = activeProject();
+      const type = event.currentTarget.dataset.planType || "30";
+      state.activePlanType = type;
+      if (project) {
+        project.activePlanType = type;
+        project.planType = type;
+        project.planLabel = planLabelFor(type);
+        projectPlan(project, type);
+      }
       state.view = "plan";
       state.activeChapterIndex = 0;
+      persist(`${planLabelFor(type)} opened`);
       render();
     }
 
@@ -806,7 +851,8 @@
 
     if (action === "prev-chapter" || action === "next-chapter") {
       const direction = action === "next-chapter" ? 1 : -1;
-      state.activeChapterIndex = Math.max(0, Math.min(activeProject().plan.phases.length - 1, state.activeChapterIndex + direction));
+      const plan = projectPlan(activeProject());
+      state.activeChapterIndex = Math.max(0, Math.min(plan.phases.length - 1, state.activeChapterIndex + direction));
       render();
     }
 
@@ -887,7 +933,7 @@
 
   function getTaskFromCard(card) {
     const project = activeProject();
-    return project.plan.phases[Number(card.dataset.phaseIndex)].tasks[Number(card.dataset.taskIndex)];
+    return projectPlan(project).phases[Number(card.dataset.phaseIndex)].tasks[Number(card.dataset.taskIndex)];
   }
 
   function openProjectModal(project = null) {
@@ -903,8 +949,8 @@
             <input name="client" required value="${escapeHtml(project?.client || project?.name || "")}" placeholder="Acme Corp" />
           </label>
           <div class="modal-plan-note">
-            <strong>30-Day Plan</strong>
-            <span>Enabled now. 60 and 90 stay locked until we build those phases.</span>
+            <strong>30 & 60-Day Plans</strong>
+            <span>Enabled now. 90 stays locked until we build that phase.</span>
           </div>
           <div class="team-builder">
             <div class="team-builder-head">
@@ -980,6 +1026,9 @@
           planType: "30",
           planLabel: "30-Day Plan",
           plan,
+          planCopies: {
+            "30": plan,
+          },
           people,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -1022,10 +1071,12 @@
     state.globalPeople = ensureGlobalPeople().filter((person) => personKey(person) !== key);
     state.projects.forEach((project) => {
       project.people = ensureProjectPeople(project).filter((person) => personKey(person) !== key);
-      allTasks(project).forEach((task) => {
-        if (!String(task.owner || "").startsWith("person:")) return;
-        const personId = task.owner.slice("person:".length);
-        if (removedIds.has(personId)) task.owner = "";
+      projectPlans(project).forEach((plan) => {
+        plan.phases.flatMap((phase) => phase.tasks).forEach((task) => {
+          if (!String(task.owner || "").startsWith("person:")) return;
+          const personId = task.owner.slice("person:".length);
+          if (removedIds.has(personId)) task.owner = "";
+        });
       });
     });
   }

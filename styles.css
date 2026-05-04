@@ -892,6 +892,14 @@ select:focus,
   margin-bottom: 22px;
 }
 
+.back-btn.compact {
+  width: fit-content;
+  min-height: 30px;
+  margin: 8px 0 0;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
 .plan-cards {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -1037,6 +1045,22 @@ select:focus,
 
 .phase-dot.phase-4 {
   background: var(--violet);
+}
+
+.phase-dot.phase-5 {
+  background: var(--brand-vivid-sky-blue);
+}
+
+.phase-dot.phase-6 {
+  background: var(--red);
+}
+
+.phase-dot.phase-7 {
+  background: #2563eb;
+}
+
+.phase-dot.phase-8 {
+  background: var(--brand-electric-purple);
 }
 
 .chapter-content {
