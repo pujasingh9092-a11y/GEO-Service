@@ -522,6 +522,7 @@
             <div class="plan-sidebar-actions">
               <button class="back-btn compact" data-action="go-selector">Plans</button>
               <button class="back-btn compact" data-action="export-plan">Export Excel</button>
+              ${type === "30" ? `<button class="back-btn compact" data-action="export-30-phase-tabs">Download CSV</button>` : ""}
             </div>
           </div>
           <nav class="chapter-nav">
@@ -819,6 +820,11 @@
       return;
     }
 
+    if (action === "export-30-phase-tabs") {
+      export30DayPhaseTabs();
+      return;
+    }
+
     if (action === "new-project") openProjectModal();
 
     if (action === "add-admin-person-row") {
@@ -984,12 +990,8 @@
     return projectPlan(project).phases[Number(card.dataset.phaseIndex)].tasks[Number(card.dataset.taskIndex)];
   }
 
-  function exportActivePlan() {
-    const project = activeProject();
-    if (!project) return;
-    const type = activePlanType(project);
-    const plan = projectPlan(project, type);
-    const headers = [
+  function exportHeaders() {
+    return [
       "Plan",
       "Chapter",
       "Day Target",
@@ -1006,24 +1008,47 @@
       "External To-do Link",
       "Google Drive Link",
     ];
+  }
+
+  function taskExportRow(project, planType, phase, task) {
+    return [
+      planLabelFor(planType),
+      `${phaseDisplayTitle(phase)} - ${phase.name}`,
+      task.dayTarget,
+      task.number,
+      task.category,
+      task.task,
+      task.howToExecuteHtml ? stripHtml(task.howToExecuteHtml) : task.howToExecute,
+      task.tools,
+      task.dependencyNotes,
+      ownerDisplayName(task.owner),
+      task.trainingRequired,
+      task.quickWin,
+      task.status,
+      task.externalTodoLink,
+      task.googleDriveLink,
+    ];
+  }
+
+  function downloadBlob(filename, blob) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportActivePlan() {
+    const project = activeProject();
+    if (!project) return;
+    const type = activePlanType(project);
+    const plan = projectPlan(project, type);
+    const headers = exportHeaders();
     const rows = plan.phases.flatMap((phase) =>
-      phase.tasks.map((task) => [
-        planLabelFor(type),
-        `${phaseDisplayTitle(phase)} - ${phase.name}`,
-        task.dayTarget,
-        task.number,
-        task.category,
-        task.task,
-        task.howToExecuteHtml ? stripHtml(task.howToExecuteHtml) : task.howToExecute,
-        task.tools,
-        task.dependencyNotes,
-        ownerDisplayName(task.owner),
-        task.trainingRequired,
-        task.quickWin,
-        task.status,
-        task.externalTodoLink,
-        task.googleDriveLink,
-      ])
+      phase.tasks.map((task) => taskExportRow(project, type, phase, task))
     );
     const tableRows = [headers, ...rows].map((row) =>
       `<tr>${row.map((cell) => `<td>${escapeHtml(cell).replaceAll("\n", "<br>")}</td>`).join("")}</tr>`
@@ -1044,15 +1069,56 @@
       </html>
     `;
     const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${fileSlug(project.name)}-${type}-day-plan.xls`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    downloadBlob(`${fileSlug(project.name)}-${type}-day-plan.xls`, blob);
     showToast(`${planLabelFor(type)} exported`);
+  }
+
+  function escapeXml(value) {
+    return String(value || "")
+      .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
+  }
+
+  function worksheetName(value) {
+    return String(value || "Sheet")
+      .replace(/[\\/?*[\]:]/g, " ")
+      .trim()
+      .slice(0, 31) || "Sheet";
+  }
+
+  function export30DayPhaseTabs() {
+    const project = activeProject();
+    if (!project) return;
+    const type = "30";
+    const plan = projectPlan(project, type);
+    const headers = exportHeaders();
+    const worksheets = plan.phases.map((phase) => {
+      const rows = [headers, ...phase.tasks.map((task) => taskExportRow(project, type, phase, task))];
+      const table = rows.map((row) =>
+        `<Row>${row.map((cell) => `<Cell><Data ss:Type="String">${escapeXml(cell)}</Data></Cell>`).join("")}</Row>`
+      ).join("");
+      return `
+        <Worksheet ss:Name="${escapeXml(worksheetName(phaseDisplayTitle(phase)))}">
+          <Table>${table}</Table>
+        </Worksheet>
+      `;
+    }).join("");
+    const workbook = `<?xml version="1.0"?>
+      <?mso-application progid="Excel.Sheet"?>
+      <Workbook
+        xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+        xmlns:o="urn:schemas-microsoft-com:office:office"
+        xmlns:x="urn:schemas-microsoft-com:office:excel"
+        xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+        ${worksheets}
+      </Workbook>
+    `;
+    const blob = new Blob([workbook], { type: "application/vnd.ms-excel;charset=utf-8" });
+    downloadBlob(`${fileSlug(project.name)}-30-day-plan-by-phase.xls`, blob);
+    showToast("30-Day Plan phase tabs exported");
   }
 
   function openProjectModal(project = null) {
