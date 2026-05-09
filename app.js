@@ -597,9 +597,6 @@
             <div class="task-num">Task ${escapeHtml(task.number)}${task.edited ? `<span class="edited-badge">edited</span>` : ""}</div>
             <div class="task-title-row" onclick="event.stopPropagation()">
               ${can("task") ? `<input class="task-title-input" data-field="task" value="${escapeHtml(task.task)}" aria-label="Task title" />` : `<h2>${escapeHtml(task.task)}</h2>`}
-              <button class="mini-edit icon-edit title-edit ${can("task") ? "is-editing" : ""}" type="button" data-action="edit-field" data-edit-field="task" title="Edit task title" aria-label="Edit task title">
-                ${penIcon()}
-              </button>
             </div>
             <div class="task-tags">
               <span class="status-tag status-${statusSlug(task.status)}">${escapeHtml(task.status || "To Do")}</span>
@@ -609,9 +606,14 @@
               ${task.quickWin === "Yes" ? `<span class="quick">Quick win</span>` : ""}
             </div>
           </div>
-          <button class="chevron" type="button" title="Open task" aria-label="Open task">
-            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5 10 12.5l5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
+          <div class="task-card-controls" onclick="event.stopPropagation()">
+            <button class="chevron" type="button" data-action="toggle-task" title="Open task" aria-label="Open task">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5 10 12.5l5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button class="mini-edit icon-edit title-edit ${can("task") ? "is-editing" : ""}" type="button" data-action="edit-field" data-edit-field="task" title="Edit task title" aria-label="Edit task title">
+              ${penIcon()}
+            </button>
+          </div>
         </div>
         <div class="task-body">
           <section class="task-section">
