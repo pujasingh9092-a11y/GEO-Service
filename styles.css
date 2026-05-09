@@ -900,6 +900,17 @@ select:focus,
   font-size: 12px;
 }
 
+.plan-sidebar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.plan-sidebar-actions .back-btn.compact {
+  margin: 0;
+}
+
 .plan-cards {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -1206,6 +1217,38 @@ select:focus,
   margin: 3px 0 8px;
   font-size: 16px;
   line-height: 1.35;
+}
+
+.task-title-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  margin: 3px 0 8px;
+}
+
+.task-title-row h2 {
+  margin: 0;
+}
+
+.task-title-input {
+  min-height: 38px;
+  border-radius: 10px;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.title-edit {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  opacity: 0.76;
+}
+
+.title-edit svg {
+  width: 16px;
+  height: 16px;
 }
 
 .chevron {

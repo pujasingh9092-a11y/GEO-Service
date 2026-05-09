@@ -92,6 +92,14 @@
     updateSaveButton("Unsaved changes");
   }
 
+  function updateTaskCardSaveState(card, task) {
+    if (!card) return;
+    const saveButton = card.querySelector("[data-action='save-task']");
+    const saveLabel = card.querySelector(".task-save-row span");
+    if (saveButton) saveButton.disabled = !task.dirty;
+    if (saveLabel) saveLabel.textContent = task.dirty ? "Unsaved changes in this card" : "Card saved";
+  }
+
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
   }
@@ -108,6 +116,12 @@
       .replaceAll('"', "&quot;");
   }
 
+  function stripHtml(value) {
+    const div = document.createElement("div");
+    div.innerHTML = String(value || "");
+    return div.innerText.trim();
+  }
+
   function textToHtml(value) {
     return escapeHtml(value).replaceAll("\n", "<br>");
   }
@@ -120,6 +134,15 @@
     const value = String(nameOrEmail || "?").trim();
     const parts = value.includes("@") ? [value[0]] : value.split(/\s+/);
     return parts.slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+  }
+
+  function fileSlug(value) {
+    return String(value || "geo-plan")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 80) || "geo-plan";
   }
 
   function activeProject() {
@@ -496,7 +519,10 @@
           <div class="chapter-sidebar-head">
           <strong>${escapeHtml(project.name)}</strong>
           <span>${escapeHtml(planLabelFor(type))}</span>
-            <button class="back-btn compact" data-action="go-selector">Plans</button>
+            <div class="plan-sidebar-actions">
+              <button class="back-btn compact" data-action="go-selector">Plans</button>
+              <button class="back-btn compact" data-action="export-plan">Export Excel</button>
+            </div>
           </div>
           <nav class="chapter-nav">
             ${plan.phases.map((item, index) => chapterNavItem(project, item, index)).join("")}
@@ -569,7 +595,12 @@
           </label>
           <div class="task-main">
             <div class="task-num">Task ${escapeHtml(task.number)}${task.edited ? `<span class="edited-badge">edited</span>` : ""}</div>
-            <h2>${escapeHtml(task.task)}</h2>
+            <div class="task-title-row" onclick="event.stopPropagation()">
+              ${can("task") ? `<input class="task-title-input" data-field="task" value="${escapeHtml(task.task)}" aria-label="Task title" />` : `<h2>${escapeHtml(task.task)}</h2>`}
+              <button class="mini-edit icon-edit title-edit ${can("task") ? "is-editing" : ""}" type="button" data-action="edit-field" data-edit-field="task" title="Edit task title" aria-label="Edit task title">
+                ${penIcon()}
+              </button>
+            </div>
             <div class="task-tags">
               <span class="status-tag status-${statusSlug(task.status)}">${escapeHtml(task.status || "To Do")}</span>
               <span class="category-tag">${escapeHtml(task.category)}</span>
@@ -781,6 +812,11 @@
       render();
     }
 
+    if (action === "export-plan") {
+      exportActivePlan();
+      return;
+    }
+
     if (action === "new-project") openProjectModal();
 
     if (action === "add-admin-person-row") {
@@ -914,6 +950,7 @@
     task.dirty = true;
     task.updatedAt = new Date().toISOString();
     markDirty();
+    updateTaskCardSaveState(card, task);
 
     if (field === "doneCheck" || field === "status") {
       render();
@@ -929,18 +966,91 @@
   }
 
   function handleRichInput(event) {
-    const task = getTaskFromCard(event.currentTarget.closest("[data-task-card]"));
+    const card = event.currentTarget.closest("[data-task-card]");
+    const task = getTaskFromCard(card);
     task.howToExecute = htmlToText(event.currentTarget);
     task.howToExecuteHtml = event.currentTarget.innerHTML;
     task.edited = true;
     task.dirty = true;
     task.updatedAt = new Date().toISOString();
     markDirty();
+    updateTaskCardSaveState(card, task);
   }
 
   function getTaskFromCard(card) {
     const project = activeProject();
     return projectPlan(project).phases[Number(card.dataset.phaseIndex)].tasks[Number(card.dataset.taskIndex)];
+  }
+
+  function exportActivePlan() {
+    const project = activeProject();
+    if (!project) return;
+    const type = activePlanType(project);
+    const plan = projectPlan(project, type);
+    const headers = [
+      "Plan",
+      "Chapter",
+      "Day Target",
+      "Task #",
+      "Category",
+      "Task",
+      "How to Execute",
+      "Tools",
+      "Dependency / Notes",
+      "Owner",
+      "Training Req?",
+      "Quick Win?",
+      "Status",
+      "External To-do Link",
+      "Google Drive Link",
+    ];
+    const rows = plan.phases.flatMap((phase) =>
+      phase.tasks.map((task) => [
+        planLabelFor(type),
+        `${phaseDisplayTitle(phase)} - ${phase.name}`,
+        task.dayTarget,
+        task.number,
+        task.category,
+        task.task,
+        task.howToExecuteHtml ? stripHtml(task.howToExecuteHtml) : task.howToExecute,
+        task.tools,
+        task.dependencyNotes,
+        ownerDisplayName(task.owner),
+        task.trainingRequired,
+        task.quickWin,
+        task.status,
+        task.externalTodoLink,
+        task.googleDriveLink,
+      ])
+    );
+    const tableRows = [headers, ...rows].map((row) =>
+      `<tr>${row.map((cell) => `<td>${escapeHtml(cell).replaceAll("\n", "<br>")}</td>`).join("")}</tr>`
+    ).join("");
+    const html = `
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <style>
+            table { border-collapse: collapse; font-family: Arial, sans-serif; font-size: 12px; }
+            td { border: 1px solid #999; padding: 6px; vertical-align: top; mso-number-format:"\\@"; }
+            tr:first-child td { font-weight: bold; background: #e8eef5; }
+          </style>
+        </head>
+        <body>
+          <table>${tableRows}</table>
+        </body>
+      </html>
+    `;
+    const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${fileSlug(project.name)}-${type}-day-plan.xls`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    showToast(`${planLabelFor(type)} exported`);
   }
 
   function openProjectModal(project = null) {
