@@ -43,3 +43,9 @@ create policy "Prototype users can update app states"
 
 grant usage on schema public to anon;
 grant select, insert, update on public.geo_app_states to anon;
+
+-- Refresh Supabase/PostgREST's schema cache so the browser API can see the table immediately.
+notify pgrst, 'reload schema';
+
+-- Optional check after running:
+-- select user_email, user_name, updated_at from public.geo_app_states;
