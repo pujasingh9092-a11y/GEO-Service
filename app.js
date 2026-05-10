@@ -365,21 +365,21 @@
           <div class="auth-logo"><span class="brand-dot"></span><strong>GEO Planner</strong></div>
           <div class="auth-copy">
             <span class="eyebrow">GEO Service Command Centre</span>
-            <h1>Run every client GEO rollout from kickoff to scale.</h1>
-            <p>Build client workspaces from proven 30, 60, and 90-day plans, assign accountable owners, adapt every task to the project, and keep progress synced in one operational source of truth.</p>
+            <h1>Run every GEO rollout in one place.</h1>
+            <p>Plan, assign, edit, track, export, and sync 30/60/90-day client delivery without touching the base template.</p>
           </div>
           <div class="auth-usp-list" aria-label="What this tool helps users do">
             <div>
-              <strong>Clone the playbook, not the mess.</strong>
-              <span>Every client gets an isolated plan copy, so edits, links, uploads, and deleted tasks never touch the base template.</span>
+              <strong>Project-safe plans</strong>
+              <span>Each client gets its own editable copy.</span>
             </div>
             <div>
-              <strong>Turn tasks into accountable delivery.</strong>
-              <span>Add people, assign roles and owners, track status, and keep external to-do and Drive links beside the work.</span>
+              <strong>Clear ownership</strong>
+              <span>Assign people, roles, status, and links per task.</span>
             </div>
             <div>
-              <strong>Move work in and out of spreadsheets.</strong>
-              <span>Export 30/60/90-day plans, update them offline, and upload the sheet back into the right project.</span>
+              <strong>Spreadsheet-ready</strong>
+              <span>Export, update offline, and upload changes back.</span>
             </div>
           </div>
         </div>
