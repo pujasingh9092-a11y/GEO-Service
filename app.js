@@ -1092,7 +1092,7 @@
       const phase = plan.phases[Number(card.dataset.phaseIndex)];
       const task = phase?.tasks[Number(card.dataset.taskIndex)];
       if (!phase || !task) return;
-      if (!window.confirm(`Delete task ${task.number}: "${task.task}"?`)) return;
+      if (!window.confirm(`Delete task ${task.number}: "${task.task}" from this project only? The base template will stay unchanged.`)) return;
       phase.tasks.splice(Number(card.dataset.taskIndex), 1);
       persist("Task deleted");
       showToast("Task deleted");
