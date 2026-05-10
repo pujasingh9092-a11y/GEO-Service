@@ -1214,21 +1214,30 @@ select:focus,
 .tasks-list {
   display: grid;
   gap: 12px;
+  overflow: visible;
 }
 
 .task-item {
-  overflow: hidden;
+  position: relative;
+  overflow: visible;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   background: white;
   box-shadow: var(--shadow-sm);
   transition: border-color 0.16s, box-shadow 0.16s;
+  z-index: 1;
 }
 
 .task-item:hover,
 .task-item.expanded {
   border-color: #bfdbfe;
   box-shadow: var(--shadow);
+  z-index: 2;
+}
+
+.task-item:has(.task-menu:hover),
+.task-item:has(.task-menu:focus-within) {
+  z-index: 30;
 }
 
 .task-header {
@@ -1335,6 +1344,7 @@ select:focus,
 
 .task-menu {
   position: relative;
+  z-index: 40;
 }
 
 .task-menu-trigger {
@@ -1355,7 +1365,7 @@ select:focus,
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  z-index: 8;
+  z-index: 50;
   min-width: 158px;
   display: none;
   padding: 8px;
