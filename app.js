@@ -722,9 +722,21 @@
             <button class="chevron" type="button" data-action="toggle-task" title="Open task" aria-label="Open task">
               <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5 10 12.5l5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
-            <button class="mini-edit icon-edit title-edit ${can("task") ? "is-editing" : ""}" type="button" data-action="edit-field" data-edit-field="task" title="Edit task title" aria-label="Edit task title">
-              ${penIcon()}
-            </button>
+            <div class="task-menu">
+              <button class="task-menu-trigger ${can("task") ? "is-editing" : ""}" type="button" title="Task options" aria-label="Task options">
+                ${dotsIcon()}
+              </button>
+              <div class="task-menu-dropdown">
+                <button type="button" data-action="edit-field" data-edit-field="task">
+                  ${penIcon()}
+                  <span>Edit title</span>
+                </button>
+                <button type="button" class="danger-menu-item" data-action="delete-task">
+                  ${trashIcon()}
+                  <span>Delete task</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
         <div class="task-body">
@@ -1068,6 +1080,22 @@
       const task = getTaskFromCard(card);
       task.editingFields = task.editingFields || {};
       task.editingFields[event.currentTarget.dataset.editField] = true;
+      renderPreservingScroll();
+    }
+
+    if (action === "delete-task") {
+      event.preventDefault();
+      event.stopPropagation();
+      const card = event.currentTarget.closest("[data-task-card]");
+      const project = activeProject();
+      const plan = projectPlan(project);
+      const phase = plan.phases[Number(card.dataset.phaseIndex)];
+      const task = phase?.tasks[Number(card.dataset.taskIndex)];
+      if (!phase || !task) return;
+      if (!window.confirm(`Delete task ${task.number}: "${task.task}"?`)) return;
+      phase.tasks.splice(Number(card.dataset.taskIndex), 1);
+      persist("Task deleted");
+      showToast("Task deleted");
       renderPreservingScroll();
     }
 

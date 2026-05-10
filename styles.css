@@ -1317,7 +1317,8 @@ select:focus,
   line-height: 1.35;
 }
 
-.title-edit {
+.title-edit,
+.task-menu-trigger {
   width: 42px;
   height: 42px;
   min-height: 42px;
@@ -1325,9 +1326,72 @@ select:focus,
   opacity: 0.76;
 }
 
-.title-edit svg {
+.title-edit svg,
+.task-menu-trigger svg,
+.task-menu-dropdown svg {
   width: 16px;
   height: 16px;
+}
+
+.task-menu {
+  position: relative;
+}
+
+.task-menu-trigger {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: white;
+  color: var(--muted);
+}
+
+.task-menu-trigger.is-editing {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.task-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 8;
+  min-width: 158px;
+  display: none;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.task-menu:hover .task-menu-dropdown,
+.task-menu:focus-within .task-menu-dropdown {
+  display: grid;
+  gap: 4px;
+}
+
+.task-menu-dropdown button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.task-menu-dropdown button:hover {
+  background: rgba(235, 255, 36, 0.12);
+  color: var(--green);
+}
+
+.task-menu-dropdown .danger-menu-item:hover {
+  background: rgba(255, 92, 80, 0.12);
+  color: var(--red);
 }
 
 .task-card-controls {
@@ -2084,7 +2148,8 @@ select:focus,
 }
 
 .check-wrap span,
-.chevron {
+.chevron,
+.task-menu-trigger {
   border-color: var(--line-strong);
   background: #080b0e;
   color: var(--ink-2);
@@ -2522,7 +2587,8 @@ h3,
 }
 
 :root[data-theme="light"] .check-wrap span,
-:root[data-theme="light"] .chevron {
+:root[data-theme="light"] .chevron,
+:root[data-theme="light"] .task-menu-trigger {
   border-color: var(--line-strong);
   background: #ffffff;
   color: var(--ink-2);
