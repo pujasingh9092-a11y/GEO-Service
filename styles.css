@@ -101,7 +101,7 @@ button:disabled {
 .auth-logo,
 .brand-mark,
 .topbar-actions,
-.auth-stats,
+.auth-usp-list,
 .project-card-top,
 .badge-row,
 .project-progress,
@@ -149,6 +149,46 @@ button:disabled {
   max-width: 680px;
 }
 
+.auth-usp-list {
+  max-width: 780px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 22px;
+  margin-top: 42px;
+}
+
+.auth-usp-list div {
+  display: grid;
+  gap: 6px;
+  padding-left: 22px;
+  position: relative;
+}
+
+.auth-usp-list div::before {
+  content: "";
+  position: absolute;
+  top: 9px;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--brand-vivid-sky-blue);
+  box-shadow: 0 0 0 6px rgba(0, 222, 255, 0.12);
+}
+
+.auth-usp-list strong {
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.auth-usp-list span {
+  max-width: 660px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
 .eyebrow {
   display: inline-flex;
   margin-bottom: 14px;
@@ -189,29 +229,6 @@ button:disabled {
 .auth-copy p {
   color: #cbd5e1;
   font-size: 17px;
-}
-
-.auth-stats {
-  gap: 16px;
-}
-
-.auth-stats div {
-  min-width: 126px;
-  padding: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-}
-
-.auth-stats strong {
-  display: block;
-  font-size: 32px;
-}
-
-.auth-stats span {
-  color: #cbd5e1;
-  font-size: 12px;
 }
 
 .auth-card,
@@ -1934,7 +1951,6 @@ body {
   color: var(--brand-vivid-sky-blue);
 }
 
-.auth-stats div,
 .auth-card,
 .modal,
 .view-header,
@@ -1945,6 +1961,14 @@ body {
   border-color: var(--line);
   background: rgba(12, 15, 18, 0.88);
   box-shadow: var(--shadow-sm);
+}
+
+.auth-usp-list strong {
+  color: #ffffff;
+}
+
+.auth-usp-list span {
+  color: rgba(255, 255, 255, 0.68);
 }
 
 .auth-card,
@@ -2395,7 +2419,6 @@ h3,
   color: var(--ink-2);
 }
 
-:root[data-theme="light"] .auth-stats div,
 :root[data-theme="light"] .auth-card,
 :root[data-theme="light"] .modal,
 :root[data-theme="light"] .view-header,
@@ -2409,6 +2432,19 @@ h3,
   border-color: var(--line);
   background: rgba(255, 255, 255, 0.94);
   box-shadow: var(--shadow-sm);
+}
+
+:root[data-theme="light"] .auth-usp-list strong {
+  color: var(--ink);
+}
+
+:root[data-theme="light"] .auth-usp-list span {
+  color: var(--ink-2);
+}
+
+:root[data-theme="light"] .auth-usp-list div::before {
+  background: var(--primary);
+  box-shadow: 0 0 0 6px rgba(3, 12, 244, 0.09);
 }
 
 :root[data-theme="light"] .assigned-person-card span {

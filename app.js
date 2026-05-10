@@ -358,21 +358,29 @@
   }
 
   function renderAuth() {
-    const totalTasks = template.plans["30"].phases.reduce((sum, phase) => sum + phase.tasks.length, 0);
     app.innerHTML = `
       <section class="auth-screen">
         <div class="auth-theme-switch">${themeToggleHtml()}</div>
         <div class="auth-panel dark">
           <div class="auth-logo"><span class="brand-dot"></span><strong>GEO Planner</strong></div>
           <div class="auth-copy">
-            <span class="eyebrow">Generative Engine Optimisation</span>
-            <h1>Run client GEO plans with serious operational clarity.</h1>
-            <p>Turn the master checklist into clean client workspaces with project-specific edits, links, owners, and progress tracking.</p>
+            <span class="eyebrow">GEO Service Command Centre</span>
+            <h1>Run every client GEO rollout from kickoff to scale.</h1>
+            <p>Build client workspaces from proven 30, 60, and 90-day plans, assign accountable owners, adapt every task to the project, and keep progress synced in one operational source of truth.</p>
           </div>
-          <div class="auth-stats">
-            <div><strong>${totalTasks}</strong><span>Workbook tasks</span></div>
-            <div><strong>4</strong><span>Chapters</span></div>
-            <div><strong>30</strong><span>Day plan</span></div>
+          <div class="auth-usp-list" aria-label="What this tool helps users do">
+            <div>
+              <strong>Clone the playbook, not the mess.</strong>
+              <span>Every client gets an isolated plan copy, so edits, links, uploads, and deleted tasks never touch the base template.</span>
+            </div>
+            <div>
+              <strong>Turn tasks into accountable delivery.</strong>
+              <span>Add people, assign roles and owners, track status, and keep external to-do and Drive links beside the work.</span>
+            </div>
+            <div>
+              <strong>Move work in and out of spreadsheets.</strong>
+              <span>Export 30/60/90-day plans, update them offline, and upload the sheet back into the right project.</span>
+            </div>
           </div>
         </div>
         <form class="auth-panel light" data-login-form>
