@@ -985,7 +985,8 @@ select:focus,
   gap: 4px;
 }
 
-.plan-export-dropdown button {
+.plan-export-dropdown button,
+.plan-import-option {
   width: 100%;
   display: flex;
   align-items: center;
@@ -999,7 +1000,12 @@ select:focus,
   cursor: pointer;
 }
 
-.plan-export-dropdown button:hover {
+.plan-import-option input {
+  display: none;
+}
+
+.plan-export-dropdown button:hover,
+.plan-import-option:hover {
   background: rgba(235, 255, 36, 0.12);
   color: var(--green);
 }

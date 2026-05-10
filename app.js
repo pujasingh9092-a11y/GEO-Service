@@ -524,6 +524,11 @@
             ${csvIcon()}
             <span>Export CSV</span>
           </button>
+          <label class="plan-import-option">
+            ${uploadIcon()}
+            <span>Upload updated sheet</span>
+            <input type="file" data-import-plan="${escapeHtml(type)}" accept=".csv,.xls,.xml,.html,.htm,text/csv,application/vnd.ms-excel" />
+          </label>
         </div>
       </div>
     `;
@@ -761,6 +766,10 @@
     return `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 3.5h7l3 3v10H5zM12 3.5v3h3M7.5 12.8c.5.5 1.2.8 2 .8 1 0 1.7-.4 1.7-1.1 0-.8-.8-1-1.7-1.2-.9-.2-1.7-.4-1.7-1.2 0-.7.7-1.1 1.6-1.1.7 0 1.3.2 1.8.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   }
 
+  function uploadIcon() {
+    return `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 13V4m0 0L6.5 7.5M10 4l3.5 3.5M4 13.5v1.8c0 .7.5 1.2 1.2 1.2h9.6c.7 0 1.2-.5 1.2-1.2v-1.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  }
+
   function formatExecutionPreview(text) {
     const lines = String(text || "").split("\n");
     return lines.map((line) => {
@@ -776,6 +785,7 @@
 
   function bindEvents() {
     app.querySelectorAll("[data-action]").forEach((el) => el.addEventListener("click", handleAction));
+    app.querySelectorAll("[data-import-plan]").forEach((el) => el.addEventListener("change", handleImportPlanFile));
     app.querySelectorAll("[data-field]").forEach((el) => {
       el.addEventListener("input", handleFieldInput);
       el.addEventListener("change", handleFieldInput);
@@ -1030,9 +1040,224 @@
     updateTaskCardSaveState(card, task);
   }
 
+  async function handleImportPlanFile(event) {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    const type = input.dataset.importPlan || "30";
+    input.value = "";
+    if (!file) return;
+
+    try {
+      const text = await readFileAsText(file);
+      if (/^\s*PK/.test(text)) {
+        showToast("Please upload CSV or the exported .xls file");
+        return;
+      }
+      const importedRows = importedSheetRows(text);
+      const result = applyImportedRows(type, importedRows);
+      if (!result.total) {
+        showToast("No matching rows found in the sheet");
+        return;
+      }
+      persist(`${result.updated} tasks updated from upload`);
+      render();
+      showToast(`Updated ${result.updated}/${result.total} matching tasks`);
+    } catch (error) {
+      console.error(error);
+      showToast("Could not read that sheet");
+    }
+  }
+
   function getTaskFromCard(card) {
     const project = activeProject();
     return projectPlan(project).phases[Number(card.dataset.phaseIndex)].tasks[Number(card.dataset.taskIndex)];
+  }
+
+  function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsText(file);
+    });
+  }
+
+  function importedSheetRows(text) {
+    const trimmed = String(text || "").trim();
+    if (!trimmed) return [];
+    if (trimmed.includes("<Workbook") || trimmed.includes("<Worksheet")) return spreadsheetXmlRows(trimmed);
+    if (/<table[\s>]/i.test(trimmed)) return htmlTableRows(trimmed);
+    return csvRows(trimmed);
+  }
+
+  function spreadsheetXmlRows(text) {
+    const doc = new DOMParser().parseFromString(text, "application/xml");
+    if (doc.querySelector("parsererror")) return [];
+    const worksheets = xmlElements(doc, "Worksheet");
+    if (!worksheets.length) return [];
+    return worksheets.flatMap((sheet) => {
+      const rows = xmlElements(sheet, "Row").map((row) =>
+        xmlElements(row, "Cell").map((cell) => {
+          const data = xmlElements(cell, "Data")[0] || cell;
+          return data.textContent || "";
+        })
+      );
+      return rowsToObjects(rows);
+    });
+  }
+
+  function htmlTableRows(text) {
+    const doc = new DOMParser().parseFromString(text, "text/html");
+    const rows = Array.from(doc.querySelectorAll("tr")).map((row) =>
+      Array.from(row.querySelectorAll("th,td")).map((cell) => cell.innerText || cell.textContent || "")
+    );
+    return rowsToObjects(rows);
+  }
+
+  function csvRows(text) {
+    const rows = [];
+    let row = [];
+    let cell = "";
+    let inQuotes = false;
+    for (let index = 0; index < text.length; index += 1) {
+      const char = text[index];
+      const next = text[index + 1];
+      if (char === '"' && inQuotes && next === '"') {
+        cell += '"';
+        index += 1;
+      } else if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === "," && !inQuotes) {
+        row.push(cell);
+        cell = "";
+      } else if ((char === "\n" || char === "\r") && !inQuotes) {
+        if (char === "\r" && next === "\n") index += 1;
+        row.push(cell);
+        if (row.some((value) => String(value).trim())) rows.push(row);
+        row = [];
+        cell = "";
+      } else {
+        cell += char;
+      }
+    }
+    row.push(cell);
+    if (row.some((value) => String(value).trim())) rows.push(row);
+    return rowsToObjects(rows);
+  }
+
+  function rowsToObjects(rows) {
+    const cleanRows = rows.filter((row) => row.some((cell) => String(cell || "").trim()));
+    if (!cleanRows.length) return [];
+    const headers = cleanRows[0].map(normalizeHeader);
+    return cleanRows.slice(1).map((row) => {
+      const record = {};
+      headers.forEach((header, index) => {
+        if (header) record[header] = String(row[index] || "").trim();
+      });
+      return record;
+    });
+  }
+
+  function xmlElements(root, name) {
+    return [
+      ...Array.from(root.getElementsByTagName(name)),
+      ...Array.from(root.getElementsByTagNameNS("*", name)),
+    ].filter((item, index, items) => items.indexOf(item) === index);
+  }
+
+  function normalizeHeader(value) {
+    return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+  }
+
+  function importedCell(row, label) {
+    return row[normalizeHeader(label)] || "";
+  }
+
+  function hasImportedColumn(row, label) {
+    return Object.prototype.hasOwnProperty.call(row, normalizeHeader(label));
+  }
+
+  function applyImportedRows(type, rows) {
+    const project = activeProject();
+    if (!project) return { total: 0, updated: 0 };
+    const plan = projectPlan(project, type);
+    let total = 0;
+    let updated = 0;
+    rows.forEach((row) => {
+      const task = findImportedTask(plan, row);
+      if (!task) return;
+      total += 1;
+      if (updateTaskFromImport(project, task, row)) updated += 1;
+    });
+    return { total, updated };
+  }
+
+  function findImportedTask(plan, row) {
+    const number = importedCell(row, "Task #");
+    const chapter = importedCell(row, "Chapter").toLowerCase();
+    const tasks = plan.phases.flatMap((phase) => phase.tasks.map((task) => ({ phase, task })));
+    if (number) {
+      const numbered = tasks.filter(({ task }) => String(task.number || "").trim() === number);
+      if (numbered.length === 1) return numbered[0].task;
+      const inChapter = numbered.find(({ phase }) => chapter.includes(phaseDisplayTitle(phase).toLowerCase()) || chapter.includes(String(phase.name || "").toLowerCase()));
+      if (inChapter) return inChapter.task;
+    }
+    const title = importedCell(row, "Task").toLowerCase();
+    return title ? tasks.find(({ task }) => String(task.task || "").trim().toLowerCase() === title)?.task : null;
+  }
+
+  function updateTaskFromImport(project, task, row) {
+    let changed = false;
+    const updates = [
+      { field: "dayTarget", label: "Day Target" },
+      { field: "category", label: "Category" },
+      { field: "task", label: "Task" },
+      { field: "howToExecute", label: "How to Execute" },
+      { field: "tools", label: "Tools" },
+      { field: "dependencyNotes", label: "Dependency / Notes" },
+      { field: "trainingRequired", label: "Training Req?" },
+      { field: "quickWin", label: "Quick Win?" },
+      { field: "status", label: "Status", transform: normalizeImportedStatus },
+      { field: "externalTodoLink", label: "External To-do Link", allowEmpty: true },
+      { field: "googleDriveLink", label: "Google Drive Link", allowEmpty: true },
+      { field: "owner", label: "Owner", transform: (value) => ownerValueFromImport(value, project), allowEmpty: true },
+    ];
+    updates.forEach(({ field, label, transform, allowEmpty }) => {
+      if (!hasImportedColumn(row, label)) return;
+      const rawValue = importedCell(row, label);
+      if (!allowEmpty && rawValue === "") return;
+      const value = transform ? transform(rawValue) : rawValue;
+      if (!allowEmpty && value === "") return;
+      if (task[field] === value) return;
+      task[field] = value;
+      changed = true;
+    });
+    if (changed) {
+      task.howToExecuteHtml = "";
+      task.editingFields = {};
+      task.edited = true;
+      task.dirty = false;
+      task.updatedAt = new Date().toISOString();
+    }
+    return changed;
+  }
+
+  function normalizeImportedStatus(value) {
+    const statuses = ["To Do", "In Progress", "Blocked", "Done"];
+    const match = statuses.find((status) => status.toLowerCase() === String(value || "").trim().toLowerCase());
+    return match || "";
+  }
+
+  function ownerValueFromImport(value, project) {
+    const owner = String(value || "").trim();
+    if (!owner || owner.toLowerCase() === "unassigned") return "";
+    const normalized = owner.toLowerCase();
+    const people = allAssignablePeople(project);
+    const match = people.find((person) => {
+      const display = `${person.name} (${person.role})`.toLowerCase();
+      return display === normalized || String(person.name || "").toLowerCase() === normalized || String(person.email || "").toLowerCase() === normalized;
+    });
+    return match ? ownerPersonValue(match) : owner;
   }
 
   function exportHeaders() {
