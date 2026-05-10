@@ -578,6 +578,8 @@ select:focus,
 }
 
 .topbar-actions {
+  display: flex;
+  align-items: center;
   gap: 10px;
   margin-left: auto;
 }
@@ -615,6 +617,15 @@ select:focus,
   color: white;
   font-size: 12px;
   font-weight: 600;
+}
+
+.db-status {
+  max-width: 160px;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .save-btn {

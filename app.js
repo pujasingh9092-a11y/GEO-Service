@@ -1,6 +1,9 @@
 (function () {
   const STORAGE_KEY = "geoPlannerState.v2";
   const LEGACY_KEY = "geoPlannerState.v1";
+  const SUPABASE_URL = "https://vqkcgwmuupoozdbdwdly.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3wo8XVB14UW3s7F5qeBoCg_3OYZhbkk";
+  const supabaseClient = window.supabase?.createClient?.(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY) || null;
   const template = window.GEO_TEMPLATE;
   const app = document.querySelector("#app");
   const OWNER_OPTIONS = [
@@ -18,10 +21,12 @@
 
   const state = loadState();
   let dirty = false;
+  let remoteSaveTimer = null;
+  let remoteStatus = supabaseClient ? "Database connected" : "Local mode";
   applyTheme();
 
-  function loadState() {
-    const fallback = {
+  function defaultState() {
+    return {
       user: null,
       projects: [],
       globalPeople: [],
@@ -31,12 +36,14 @@
       activePlanType: "30",
       theme: "dark",
     };
+  }
 
+  function loadState() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_KEY);
-      return { ...fallback, ...JSON.parse(stored || "{}") };
+      return { ...defaultState(), ...JSON.parse(stored || "{}") };
     } catch {
-      return fallback;
+      return defaultState();
     }
   }
 
@@ -44,6 +51,74 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     dirty = hasDirtyTasks();
     updateSaveButton(message);
+    queueRemoteSave();
+  }
+
+  function replaceState(nextState) {
+    Object.keys(state).forEach((key) => delete state[key]);
+    Object.assign(state, { ...defaultState(), ...nextState });
+  }
+
+  function queueRemoteSave() {
+    if (!supabaseClient || !state.user?.email) return;
+    clearTimeout(remoteSaveTimer);
+    remoteSaveTimer = setTimeout(() => {
+      saveStateToSupabase().catch((error) => {
+        console.error(error);
+        remoteStatus = "Database sync failed";
+        updateSaveButton("Saved locally");
+      });
+    }, 400);
+  }
+
+  async function saveStateToSupabase() {
+    if (!supabaseClient || !state.user?.email) return;
+    const email = state.user.email.trim().toLowerCase();
+    const snapshot = clone(state);
+    const { error } = await supabaseClient
+      .from("geo_app_states")
+      .upsert({
+        user_email: email,
+        user_name: state.user.name || "",
+        state: snapshot,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "user_email" });
+    if (error) throw error;
+    remoteStatus = "Database synced";
+    updateSaveButton(dirty ? "Unsaved changes" : "Saved");
+  }
+
+  async function loadStateFromSupabase(email) {
+    if (!supabaseClient || !email) return null;
+    const { data, error } = await supabaseClient
+      .from("geo_app_states")
+      .select("state")
+      .eq("user_email", email.trim().toLowerCase())
+      .maybeSingle();
+    if (error) throw error;
+    return data?.state || null;
+  }
+
+  async function hydrateStateFromSupabase(email, fallbackUser = state.user) {
+    if (!supabaseClient || !email) return false;
+    try {
+      remoteStatus = "Loading database";
+      const remoteState = await loadStateFromSupabase(email);
+      if (remoteState) {
+        replaceState({ ...remoteState, user: fallbackUser || remoteState.user });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        remoteStatus = "Database loaded";
+        dirty = hasDirtyTasks();
+        return true;
+      }
+      remoteStatus = "Database ready";
+      await saveStateToSupabase();
+      return false;
+    } catch (error) {
+      console.error(error);
+      remoteStatus = "Database unavailable";
+      return false;
+    }
   }
 
   function applyTheme() {
@@ -80,11 +155,14 @@
   function updateSaveButton(message) {
     const saveButton = document.querySelector("[data-action='save-project']");
     const saveLabel = document.querySelector("[data-save-label]");
-    if (!saveButton || !saveLabel) return;
+    const databaseLabel = document.querySelector("[data-db-status]");
 
-    saveButton.classList.toggle("dirty", dirty);
-    saveButton.disabled = !dirty;
-    saveLabel.textContent = message || (dirty ? "Unsaved changes" : "Saved");
+    if (saveButton && saveLabel) {
+      saveButton.classList.toggle("dirty", dirty);
+      saveButton.disabled = !dirty;
+      saveLabel.textContent = message || (dirty ? "Unsaved changes" : "Saved");
+    }
+    if (databaseLabel) databaseLabel.textContent = remoteStatus;
   }
 
   function markDirty() {
@@ -247,6 +325,7 @@
           <div class="topbar-actions">
             ${state.view === "plan" ? saveButtonHtml() : ""}
             ${themeToggleHtml()}
+            <span class="db-status" data-db-status>${escapeHtml(remoteStatus)}</span>
             <span class="user-pill" title="${escapeHtml(state.user.email)}">${escapeHtml(initials(state.user.name || state.user.email))}</span>
             <button class="quiet-btn" data-action="logout">Sign out</button>
           </div>
@@ -299,7 +378,7 @@
         <form class="auth-panel light" data-login-form>
           <div class="auth-card">
             <h2>Welcome back</h2>
-            <p>Use any name and email to open this local prototype.</p>
+            <p>Use your name and email to open the shared Supabase-backed workspace.</p>
             <label class="field">
               <span>Name</span>
               <input name="name" autocomplete="name" required placeholder="Your name" />
@@ -309,22 +388,29 @@
               <input name="email" type="email" autocomplete="email" required placeholder="you@agency.com" />
             </label>
             <button class="primary-btn" type="submit">Enter workspace</button>
-            <div class="hint">Data is stored locally in this browser. Each project receives its own cloned copy of the base plan.</div>
+            <div class="hint">${escapeHtml(remoteStatus)}. Each project receives its own cloned copy of the base plan.</div>
           </div>
         </form>
       </section>
     `;
 
     app.querySelector("[data-action='toggle-theme']")?.addEventListener("click", handleAction);
-    document.querySelector("[data-login-form]").addEventListener("submit", (event) => {
+    document.querySelector("[data-login-form]").addEventListener("submit", async (event) => {
       event.preventDefault();
+      const button = event.currentTarget.querySelector("button[type='submit']");
+      if (button) {
+        button.disabled = true;
+        button.textContent = "Loading workspace...";
+      }
       const form = new FormData(event.currentTarget);
-      state.user = {
+      const user = {
         name: String(form.get("name")).trim(),
         email: String(form.get("email")).trim(),
       };
+      state.user = user;
       state.view = "projects";
-      persist("Logged in");
+      const loadedRemote = await hydrateStateFromSupabase(user.email, user);
+      if (!loadedRemote) persist("Logged in");
       render();
     });
   }
@@ -1699,5 +1785,14 @@
     }, 1400);
   }
 
-  render();
+  async function bootstrap() {
+    render();
+    if (state.user?.email) {
+      await hydrateStateFromSupabase(state.user.email, state.user);
+      applyTheme();
+      render();
+    }
+  }
+
+  bootstrap();
 })();
