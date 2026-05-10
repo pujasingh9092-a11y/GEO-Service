@@ -366,7 +366,7 @@
           <div class="auth-copy">
             <span class="eyebrow">GEO Service Command Centre</span>
             <h1>Run every GEO rollout in one place.</h1>
-            <p>Plan, assign, edit, track, export, and sync 30/60/90-day client delivery without touching the base template.</p>
+            <p>Plan, assign, edit, track, export, and sync 30/60/90-day client delivery.</p>
           </div>
           <div class="auth-usp-list" aria-label="What this tool helps users do">
             <div>
