@@ -483,27 +483,49 @@
           </div>
         </section>
         <section class="plan-cards">
-          <button class="plan-card live" data-action="open-plan" data-plan-type="30">
+          <article class="plan-card live" data-action="open-plan" data-plan-type="30" role="button" tabindex="0">
+            ${planExportMenuHtml("30")}
             <span class="plan-num">30</span>
             <span class="plan-label">Day plan</span>
             <strong>Foundation & Audit</strong>
             <p>Full GEO audit, baseline measurement, quick wins, and client handoff.</p>
-          </button>
-          <button class="plan-card live" data-action="open-plan" data-plan-type="60">
+          </article>
+          <article class="plan-card live" data-action="open-plan" data-plan-type="60" role="button" tabindex="0">
+            ${planExportMenuHtml("60")}
             <span class="plan-num">60</span>
             <span class="plan-label">Day plan</span>
             <strong>Implementation</strong>
             <p>Days 31–60 implementation, content architecture, schema, social, authority, and reporting.</p>
-          </button>
-          <button class="plan-card" disabled>
+          </article>
+          <article class="plan-card disabled" aria-disabled="true">
             <em>Coming soon</em>
             <span class="plan-num">90</span>
             <span class="plan-label">Day plan</span>
             <strong>Scale & Authority</strong>
             <p>Content scaling, PR amplification, reputation building, and final attribution.</p>
-          </button>
+          </article>
         </section>
       </main>
+    `;
+  }
+
+  function planExportMenuHtml(type) {
+    return `
+      <div class="plan-export-menu" onclick="event.stopPropagation()">
+        <button class="plan-menu-trigger" type="button" aria-label="Export ${escapeHtml(type)} day plan">
+          ${dotsIcon()}
+        </button>
+        <div class="plan-export-dropdown">
+          <button type="button" data-action="export-plan-card" data-export-type="${escapeHtml(type)}" data-export-format="excel">
+            ${spreadsheetIcon()}
+            <span>Export Excel</span>
+          </button>
+          <button type="button" data-action="export-plan-card" data-export-type="${escapeHtml(type)}" data-export-format="csv">
+            ${csvIcon()}
+            <span>Export CSV</span>
+          </button>
+        </div>
+      </div>
     `;
   }
 
@@ -521,8 +543,6 @@
           <span>${escapeHtml(planLabelFor(type))}</span>
             <div class="plan-sidebar-actions">
               <button class="back-btn compact" data-action="go-selector">Plans</button>
-              <button class="back-btn compact" data-action="export-plan">Export Excel</button>
-              ${type === "30" ? `<button class="back-btn compact" data-action="export-30-phase-tabs">Download CSV</button>` : ""}
             </div>
           </div>
           <nav class="chapter-nav">
@@ -729,6 +749,18 @@
     return `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7.2 4.5V3.4c0-.6.5-1.1 1.1-1.1h3.4c.6 0 1.1.5 1.1 1.1v1.1m-8 0h10.4m-9 0 .7 12.2c0 .6.5 1 1.1 1h4c.6 0 1.1-.4 1.1-1l.7-12.2M8.7 8.1v5.6m2.6-5.6v5.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   }
 
+  function dotsIcon() {
+    return `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h.1M10 10h.1M15 10h.1" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>`;
+  }
+
+  function spreadsheetIcon() {
+    return `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 3.5h12v13H4zM4 7.5h12M8 3.5v13m4-9v9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+  }
+
+  function csvIcon() {
+    return `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 3.5h7l3 3v10H5zM12 3.5v3h3M7.5 12.8c.5.5 1.2.8 2 .8 1 0 1.7-.4 1.7-1.1 0-.8-.8-1-1.7-1.2-.9-.2-1.7-.4-1.7-1.2 0-.7.7-1.1 1.6-1.1.7 0 1.3.2 1.8.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  }
+
   function formatExecutionPreview(text) {
     const lines = String(text || "").split("\n");
     return lines.map((line) => {
@@ -822,6 +854,19 @@
 
     if (action === "export-30-phase-tabs") {
       export30DayPhaseTabs();
+      return;
+    }
+
+    if (action === "export-plan-card") {
+      event.preventDefault();
+      event.stopPropagation();
+      const type = event.currentTarget.dataset.exportType || "30";
+      const format = event.currentTarget.dataset.exportFormat || "excel";
+      if (format === "csv") {
+        exportPlanPhaseTabs(type);
+      } else {
+        exportPlanExcel(type);
+      }
       return;
     }
 
@@ -1042,9 +1087,12 @@
   }
 
   function exportActivePlan() {
+    exportPlanExcel(activePlanType(activeProject()));
+  }
+
+  function exportPlanExcel(type = "30") {
     const project = activeProject();
     if (!project) return;
-    const type = activePlanType(project);
     const plan = projectPlan(project, type);
     const headers = exportHeaders();
     const rows = plan.phases.flatMap((phase) =>
@@ -1090,9 +1138,12 @@
   }
 
   function export30DayPhaseTabs() {
+    exportPlanPhaseTabs("30");
+  }
+
+  function exportPlanPhaseTabs(type = "30") {
     const project = activeProject();
     if (!project) return;
-    const type = "30";
     const plan = projectPlan(project, type);
     const headers = exportHeaders();
     const worksheets = plan.phases.map((phase) => {
@@ -1117,8 +1168,8 @@
       </Workbook>
     `;
     const blob = new Blob([workbook], { type: "application/vnd.ms-excel;charset=utf-8" });
-    downloadBlob(`${fileSlug(project.name)}-30-day-plan-by-phase.xls`, blob);
-    showToast("30-Day Plan phase tabs exported");
+    downloadBlob(`${fileSlug(project.name)}-${type}-day-plan-by-phase.xls`, blob);
+    showToast(`${planLabelFor(type)} phase tabs exported`);
   }
 
   function openProjectModal(project = null) {

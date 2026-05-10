@@ -918,10 +918,13 @@ select:focus,
 .plan-card {
   display: grid;
   gap: 8px;
+  cursor: pointer;
 }
 
+.plan-card.disabled,
 .plan-card:disabled {
   filter: grayscale(0.2);
+  cursor: not-allowed;
 }
 
 .plan-card em {
@@ -936,6 +939,69 @@ select:focus,
   font-style: normal;
   font-weight: 600;
   text-transform: uppercase;
+}
+
+.plan-export-menu {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 5;
+}
+
+.plan-menu-trigger {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.plan-menu-trigger svg,
+.plan-export-dropdown svg {
+  width: 18px;
+  height: 18px;
+}
+
+.plan-export-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 178px;
+  display: none;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.plan-export-menu:hover .plan-export-dropdown,
+.plan-export-menu:focus-within .plan-export-dropdown {
+  display: grid;
+  gap: 4px;
+}
+
+.plan-export-dropdown button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.plan-export-dropdown button:hover {
+  background: rgba(235, 255, 36, 0.12);
+  color: var(--green);
 }
 
 .plan-num {
