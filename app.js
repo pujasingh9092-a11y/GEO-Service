@@ -386,7 +386,7 @@
         <form class="auth-panel light" data-login-form>
           <div class="auth-card">
             <h2>Welcome back</h2>
-            <p>Use your name and email to open the shared Supabase-backed workspace.</p>
+            <p>Use your name and email to open the shared workspace.</p>
             <label class="field">
               <span>Name</span>
               <input name="name" autocomplete="name" required placeholder="Your name" />
